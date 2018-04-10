@@ -1248,7 +1248,7 @@
 	return 1
 
 /obj/item/weapon/reagent_containers/food/snacks/monkeycube/proc/Expand()
-	if(isnull(gcDestroyed))
+	if(!QDELETED(src))
 		visible_message("<span class='notice'>[src] expands!</span>")
 		new/mob/living/carbon/human(get_turf(src), monkey_type)
 		qdel(src)
@@ -1845,7 +1845,7 @@
 
 /obj/item/weapon/reagent_containers/food/snacks/sliceable/cheesewheel
 	name = "Cheese wheel"
-	desc = "A big wheel of delcious Cheddar."
+	desc = "A big wheel of delicious Cheddar."
 	icon_state = "cheesewheel"
 	slice_path = /obj/item/weapon/reagent_containers/food/snacks/cheesewedge
 	slices_num = 5

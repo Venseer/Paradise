@@ -373,6 +373,7 @@ var/time_last_changed_position = 0
 					//let custom jobs function as an impromptu alt title, mainly for sechuds
 					if(temp_t && modify)
 						modify.assignment = temp_t
+						log_game("[key_name(usr)] has given \"[modify.registered_name]\" the custom job title \"[temp_t]\".")
 				else
 					var/list/access = list()
 					if(is_centcom())
@@ -389,6 +390,11 @@ var/time_last_changed_position = 0
 							return
 
 						access = jobdatum.get_access()
+
+					var/jobnamedata = modify.getRankAndAssignment()
+					log_game("[key_name(usr)] has reassigned \"[modify.registered_name]\" from \"[jobnamedata]\" to \"[t1]\".")
+					if(t1 == "Civilian")
+						message_admins("[key_name_admin(usr)] has reassigned \"[modify.registered_name]\" from \"[jobnamedata]\" to \"[t1]\".")
 
 					modify.access = access
 					modify.rank = t1
@@ -429,7 +435,7 @@ var/time_last_changed_position = 0
 
 					var/obj/item/weapon/paper/P = new(loc)
 					if(mode == 2)
-						P.name = text("crew manifest ([])", worldtime2text())
+						P.name = "crew manifest ([station_time_timestamp()])"
 						P.info = {"<h4>Crew Manifest</h4>
 							<br>
 							[data_core ? data_core.get_manifest(0) : ""]
@@ -454,6 +460,9 @@ var/time_last_changed_position = 0
 
 		if("terminate")
 			if(is_authenticated(usr) && !target_dept)
+				var/jobnamedata = modify.getRankAndAssignment()
+				log_game("[key_name(usr)] has terminated the employment of \"[modify.registered_name]\" the \"[jobnamedata]\".")
+				message_admins("[key_name_admin(usr)] has terminated the employment of \"[modify.registered_name]\" the \"[jobnamedata]\".")
 				modify.assignment = "Terminated"
 				modify.access = list()
 				callHook("terminate_employee", list(modify))
@@ -470,6 +479,10 @@ var/time_last_changed_position = 0
 				var/list/access = list()
 				var/datum/job/jobdatum = new /datum/job/civilian
 				access = jobdatum.get_access()
+
+				var/jobnamedata = modify.getRankAndAssignment()
+				log_game("[key_name(usr)] has demoted \"[modify.registered_name]\" the \"[jobnamedata]\" to \"Civilian (Unassigned)\".")
+				message_admins("[key_name_admin(usr)] has demoted \"[modify.registered_name]\" the \"[jobnamedata]\" to \"Civilian (Unassigned)\".")
 
 				modify.access = access
 				modify.rank = "Civilian"
