@@ -9,6 +9,7 @@
 	slot_flags = SLOT_BACK
 	origin_tech = "combat=4;materials=2"
 	mag_type = /obj/item/ammo_box/magazine/internal/shot
+	fire_sound = 'sound/weapons/gunshots/gunshot_shotgun.ogg'
 	var/recentpump = 0 // to prevent spammage
 
 /obj/item/gun/projectile/shotgun/attackby(obj/item/A, mob/user, params)
@@ -44,7 +45,7 @@
 
 
 /obj/item/gun/projectile/shotgun/proc/pump(mob/M)
-	playsound(M, 'sound/weapons/shotgunpump.ogg', 60, 1)
+	playsound(M, 'sound/weapons/gun_interactions/shotgunpump.ogg', 60, 1)
 	pump_unload(M)
 	pump_reload(M)
 	update_icon() //I.E. fix the desc
@@ -54,6 +55,7 @@
 	if(chambered)//We have a shell in the chamber
 		chambered.loc = get_turf(src)//Eject casing
 		chambered.SpinAnimation(5, 1)
+		playsound(src, chambered.drop_sound, 60, 1)
 		chambered = null
 
 /obj/item/gun/projectile/shotgun/proc/pump_reload(mob/M)
@@ -81,6 +83,7 @@
 	icon_state = "riotshotgun"
 	mag_type = /obj/item/ammo_box/magazine/internal/shot/riot
 	sawn_desc = "Come with me if you want to live."
+	sawn_state = SAWN_INTACT
 
 /obj/item/gun/projectile/shotgun/riot/attackby(obj/item/A, mob/user, params)
 	..()
@@ -90,6 +93,109 @@
 		var/obj/item/melee/energy/W = A
 		if(W.active)
 			sawoff(user)
+	if(istype(A, /obj/item/pipe))
+		unsaw(A, user)
+
+/obj/item/gun/projectile/shotgun/riot/sawoff(mob/user)
+	if(sawn_state == SAWN_OFF)
+		to_chat(user, "<span class='warning'>[src] has already been shortened!</span>")
+		return
+	if(istype(loc, /obj/item/storage))	//To prevent inventory exploits
+		to_chat(user, "<span class='info'>How do you plan to modify [src] while it's in a bag.</span>")
+		return
+	if(chambered)	//if the gun is chambering live ammo, shoot self, if chambering empty ammo, 'click'
+		if(chambered.BB)
+			afterattack(user, user)
+			user.visible_message("<span class='danger'>\The [src] goes off!</span>", "<span class='danger'>\The [src] goes off in your face!</span>")
+			return
+		else
+			afterattack(user, user)
+			user.visible_message("The [src] goes click!", "<span class='notice'>The [src] you are holding goes click.</span>")
+	if(magazine.ammo_count())	//Spill the mag onto the floor
+		user.visible_message("<span class='danger'>[user.name] opens [src] up and the shells go goes flying around!</span>", "<span class='userdanger'>You open [src] up and the shells go goes flying everywhere!!</span>")
+		while(get_ammo(0) > 0)
+			var/obj/item/ammo_casing/CB
+			CB = magazine.get_round(0)
+			if(CB)
+				CB.loc = get_turf(loc)
+				CB.update_icon()
+
+	if(do_after(user, 30, target = src))
+		user.visible_message("[user] shortens \the [src]!", "<span class='notice'>You shorten \the [src].</span>")
+		post_sawoff()
+		return 1
+
+
+/obj/item/gun/projectile/shotgun/riot/proc/post_sawoff()
+	name = "assault shotgun"
+	desc = sawn_desc
+	w_class = WEIGHT_CLASS_NORMAL
+	current_skin = "riotshotgun-short"
+	item_state = "gun"			//phil235 is it different with different skin?
+	slot_flags &= ~SLOT_BACK    //you can't sling it on your back
+	slot_flags |= SLOT_BELT     //but you can wear it on your belt (poorly concealed under a trenchcoat, ideally)
+	sawn_state = SAWN_OFF
+	magazine.max_ammo = 3
+	update_icon()
+
+
+/obj/item/gun/projectile/shotgun/riot/proc/unsaw(obj/item/A, mob/user)
+	if(sawn_state == SAWN_INTACT)
+		to_chat(user, "<span class='warning'>[src] has not been shortened!</span>")
+		return
+	if(istype(loc, /obj/item/storage))	//To prevent inventory exploits
+		to_chat(user, "<span class='info'>How do you plan to modify [src] while it's in a bag.</span>")
+		return
+	if(chambered)	//if the gun is chambering live ammo, shoot self, if chambering empty ammo, 'click'
+		if(chambered.BB)
+			afterattack(user, user)
+			user.visible_message("<span class='danger'>\The [src] goes off!</span>", "<span class='danger'>\The [src] goes off in your face!</span>")
+			return
+		else
+			afterattack(user, user)
+			user.visible_message("The [src] goes click!", "<span class='notice'>The [src] you are holding goes click.</span>")
+	if(magazine.ammo_count())	//Spill the mag onto the floor
+		user.visible_message("<span class='danger'>[user.name] opens [src] up and the shells go goes flying around!</span>", "<span class='userdanger'>You open [src] up and the shells go goes flying everywhere!!</span>")
+		while(get_ammo() > 0)
+			var/obj/item/ammo_casing/CB
+			CB = magazine.get_round(0)
+			if(CB)
+				CB.loc = get_turf(loc)
+				CB.update_icon()
+
+	if(do_after(user, 30, target = src))
+		qdel(A)
+		user.visible_message("<span class='notice'>[user] lengthens [src]!</span>", "<span class='notice'>You lengthen [src].</span>")
+		post_unsaw(user)
+		return 1
+
+/obj/item/gun/projectile/shotgun/riot/proc/post_unsaw()
+	name = initial(name)
+	desc = initial(desc)
+	w_class = initial(w_class)
+	current_skin = "riotshotgun"
+	item_state = initial(item_state)
+	slot_flags &= ~SLOT_BELT
+	slot_flags |= SLOT_BACK
+	sawn_state = SAWN_INTACT
+	magazine.max_ammo = 6
+	update_icon()
+
+/obj/item/gun/projectile/shotgun/riot/update_icon() //Can't use the old proc as it makes it go to riotshotgun-short_sawn
+	..()
+	if(current_skin)
+		icon_state = "[current_skin]"
+	else
+		icon_state = "[initial(icon_state)]"
+
+/obj/item/gun/projectile/shotgun/riot/short
+	mag_type = /obj/item/ammo_box/magazine/internal/shot/riot/short
+
+/obj/item/gun/projectile/shotgun/riot/short/New()
+	..()
+	post_sawoff()
+
+
 
 ///////////////////////
 // BOLT ACTION RIFLE //
@@ -102,10 +208,11 @@
 	item_state = "moistnugget"
 	slot_flags = 0 //no SLOT_BACK sprite, alas
 	mag_type = /obj/item/ammo_box/magazine/internal/boltaction
+	fire_sound = 'sound/weapons/gunshots/gunshot_rifle.ogg'
 	var/bolt_open = 0
 
 /obj/item/gun/projectile/shotgun/boltaction/pump(mob/M)
-	playsound(M, 'sound/weapons/shotgunpump.ogg', 60, 1)
+	playsound(M, 'sound/weapons/gun_interactions/rifle_load.ogg', 60, 1)
 	if(bolt_open)
 		pump_reload(M)
 	else
@@ -208,6 +315,7 @@
 		to_chat(user, "You switch to tube B.")
 	else
 		to_chat(user, "You switch to tube A.")
+	playsound(user, 'sound/weapons/gun_interactions/selector.ogg', 100, 1)
 
 /obj/item/gun/projectile/shotgun/automatic/dual_tube/AltClick(mob/living/user)
 	if(user.incapacitated() || !Adjacent(user) || !istype(user))

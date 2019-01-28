@@ -15,7 +15,7 @@
 
 	end_duration = 100
 	end_message = "<span class='notice'>The air seems to be cooling off again.</span>"
-
+	var/pre_maint_all_access
 	area_type = /area
 	protected_areas = list(/area/maintenance, /area/turret_protected/ai_upload, /area/turret_protected/ai_upload_foyer,
 	/area/turret_protected/ai, /area/storage/emergency, /area/storage/emergency2, /area/crew_quarters/sleep, /area/security/brig, /area/shuttle)
@@ -26,7 +26,9 @@
 /datum/weather/rad_storm/telegraph()
 	..()
 	status_alarm(TRUE)
-	make_maint_all_access()
+	pre_maint_all_access = maint_all_access
+	if(!maint_all_access)
+		make_maint_all_access()
 
 
 /datum/weather/rad_storm/weather_act(mob/living/L)
@@ -34,7 +36,7 @@
 	if(prob(40))
 		if(ishuman(L))
 			var/mob/living/carbon/human/H = L
-			if(!(RADIMMUNE in H.species.species_traits))
+			if(!(RADIMMUNE in H.dna.species.species_traits))
 				if(prob(max(0, 100 - resist)))
 					randmuti(H) // Applies bad mutation
 					if(prob(50))
@@ -51,7 +53,8 @@
 		return
 	priority_announcement.Announce("The radiation threat has passed. Please return to your workplaces.", "Anomaly Alert")
 	status_alarm(FALSE)
-	revoke_maint_all_access()
+	if(!pre_maint_all_access)
+		revoke_maint_all_access()
 
 /datum/weather/rad_storm/proc/status_alarm(active)	//Makes the status displays show the radiation warning for those who missed the announcement.
 	if(active)

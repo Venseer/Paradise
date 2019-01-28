@@ -54,6 +54,7 @@
 
 
 /obj/structure/mirror/attackby(obj/item/I, mob/living/user, params)
+	user.changeNext_move(CLICK_CD_MELEE)
 	if(isscrewdriver(I))
 		user.visible_message("<span class='notice'>[user] begins to unfasten [src].</span>", "<span class='notice'>You begin to unfasten [src].</span>")
 		if(do_after(user, 30 * I.toolspeed, target = src))
@@ -80,6 +81,7 @@
 
 
 /obj/structure/mirror/attack_alien(mob/living/user)
+	user.changeNext_move(CLICK_CD_MELEE)
 	if(islarva(user))
 		return
 	user.do_attack_animation(src)
@@ -91,6 +93,7 @@
 
 
 /obj/structure/mirror/attack_animal(mob/living/user)
+	user.changeNext_move(CLICK_CD_MELEE)
 	if(!isanimal(user))
 		return
 	var/mob/living/simple_animal/M = user
@@ -105,6 +108,7 @@
 
 
 /obj/structure/mirror/attack_slime(mob/living/user)
+	user.changeNext_move(CLICK_CD_MELEE)
 	var/mob/living/carbon/slime/S = user
 	if(!S.is_adult)
 		return
@@ -126,3 +130,51 @@
 	var/obj/structure/mirror/M = new /obj/structure/mirror(get_turf(user), get_dir(on_wall, user), 1)
 	transfer_prints_to(M, TRUE)
 	qdel(src)
+
+/obj/structure/mirror/magic
+	name = "magic mirror"
+	icon_state = "magic_mirror"
+
+/obj/structure/mirror/magic/attack_hand(mob/user)
+	if(!ishuman(user))
+		return
+
+	var/mob/living/carbon/human/H = user
+	var/choice = input(user, "Something to change?", "Magical Grooming") as null|anything in list("Name", "Body")
+
+	switch(choice)
+		if("Name")
+			var/newname = copytext(sanitize(input(H, "Who are we again?", "Name change", H.name) as null|text),1,MAX_NAME_LEN)
+
+			if(!newname)
+				return
+			H.real_name = newname
+			H.name = newname
+			if(H.dna)
+				H.dna.real_name = newname
+			if(H.mind)
+				H.mind.name = newname
+
+		if("Body")
+			var/list/race_list = list("Human", "Tajaran", "Skrell", "Unathi", "Diona", "Vulpkanin")
+			if(config.usealienwhitelist)
+				for(var/Spec in GLOB.whitelisted_species)
+					if(is_alien_whitelisted(H, Spec))
+						race_list += Spec
+			else
+				race_list += GLOB.whitelisted_species
+
+			var/datum/nano_module/appearance_changer/AC = ui_users[user]
+			if(!AC)
+				AC = new(src, user)
+				AC.name = "Magic Mirror"
+				AC.flags = APPEARANCE_ALL
+				AC.whitelist = race_list
+				ui_users[user] = AC
+			AC.ui_interact(user)
+
+/obj/structure/mirror/magic/attackby(obj/item/I, mob/living/user, params)
+	return
+
+/obj/structure/mirror/magic/shatter()
+	return //can't be broken. it's magic, i ain't gotta explain shit

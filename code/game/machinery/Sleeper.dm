@@ -92,7 +92,7 @@
 	if(filtering > 0)
 		if(beaker)
 			// To prevent runtimes from drawing blood from runtime, and to prevent getting IPC blood.
-			if(!istype(occupant) || !occupant.dna || (NO_BLOOD in occupant.species.species_traits))
+			if(!istype(occupant) || !occupant.dna || (NO_BLOOD in occupant.dna.species.species_traits))
 				filtering = 0
 				return
 
@@ -167,10 +167,10 @@
 		occupantData["maxTemp"] = 1000 // If you get a burning vox armalis into the sleeper, congratulations
 		// Because we can put simple_animals in here, we need to do something tricky to get things working nice
 		occupantData["temperatureSuitability"] = 0 // 0 is the baseline
-		if(ishuman(occupant) && occupant.species)
+		if(ishuman(occupant) && occupant.dna.species)
 			// I wanna do something where the bar gets bluer as the temperature gets lower
 			// For now, I'll just use the standard format for the temperature status
-			var/datum/species/sp = occupant.species
+			var/datum/species/sp = occupant.dna.species
 			if(occupant.bodytemperature < sp.cold_level_3)
 				occupantData["temperatureSuitability"] = -3
 			else if(occupant.bodytemperature < sp.cold_level_2)
@@ -197,7 +197,7 @@
 		crisis = (occupant.health < min_health)
 		// I'm not sure WHY you'd want to put a simple_animal in a sleeper, but precedent is precedent
 		// Runtime is aptly named, isn't she?
-		if(ishuman(occupant) && !(NO_BLOOD in occupant.species.species_traits))
+		if(ishuman(occupant) && !(NO_BLOOD in occupant.dna.species.species_traits))
 			occupantData["pulse"] = occupant.get_pulse(GETPULSE_TOOL)
 			occupantData["hasBlood"] = 1
 			occupantData["bloodLevel"] = round(occupant.blood_volume)
@@ -217,7 +217,7 @@
 
 	var/chemicals[0]
 	for(var/re in injection_chems)
-		var/datum/reagent/temp = chemical_reagents_list[re]
+		var/datum/reagent/temp = GLOB.chemical_reagents_list[re]
 		if(temp)
 			var/reagent_amount = 0
 			var/pretty_amount
@@ -420,7 +420,7 @@
 
 /obj/machinery/sleeper/proc/inject_chemical(mob/living/user as mob, chemical, amount)
 	if(!(chemical in injection_chems))
-		to_chat(user, "<span class='notice'>The sleeper does not offer that chemical!</notice>")
+		to_chat(user, "<span class='notice'>The sleeper does not offer that chemical!</span>")
 		return
 
 	if(occupant)
@@ -519,8 +519,8 @@
 		return
 	return
 
-/obj/machinery/sleeper/allow_drop()
-	return 0
+/obj/machinery/sleeper/AllowDrop()
+	return FALSE
 
 /obj/machinery/sleeper/verb/move_inside()
 	set name = "Enter Sleeper"

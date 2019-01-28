@@ -62,7 +62,6 @@
 	playsound(src.loc, 'sound/items/Welder.ogg', 50, 1)
 	H.emote("scream") // It is painful
 	H.adjustBruteLoss(max(0, 80 - H.getBruteLoss())) // Hurt the human, don't try to kill them though.
-	H.handle_regular_hud_updates() // Make sure they see the pain.
 
 	// Sleep for a couple of ticks to allow the human to see the pain
 	sleep(5)
@@ -134,7 +133,7 @@
 		return
 
 	// Crossed didn't like people lying down.
-	if(isobject(AM))
+	if(isatom(AM))
 		AM.loc = src.loc
 		do_transform_mime(AM)
 	else
@@ -222,7 +221,7 @@
 			AM.loc = src.loc
 			irradiate(AM)
 
-	else if(isobject(AM))
+	else if(isatom(AM))
 		AM.loc = src.loc
 		scan(AM)
 
@@ -289,18 +288,18 @@
 			qdel(I)
 
 	H.equipOutfit(selected_outfit)
-	H.species.after_equip_job(null, H)
+	H.dna.species.after_equip_job(null, H)
 
 /obj/machinery/transformer/transmogrifier
 	name = "species transmogrifier"
 	desc = "As promoted in Calvin & Hobbes!"
-	var/target_species = "Human"
+	var/datum/species/target_species = /datum/species/human
 
 
 /obj/machinery/transformer/transmogrifier/do_transform(mob/living/carbon/human/H)
 	if(!istype(H))
 		return
-	if(!(target_species in all_species))
+	if(!ispath(target_species))
 		to_chat(H, "<span class='warning'>'[target_species]' is not a valid species!</span>")
 		return
 	H.set_species(target_species)
@@ -336,7 +335,7 @@
 		to_chat(H, "<span class='warning'>No genetic template configured!</span>")
 		return
 	var/prev_ue = H.dna.unique_enzymes
-	H.set_species(template.species)
+	H.set_species(template.species.type)
 	H.dna = template.Clone()
 	H.real_name = template.real_name
 	H.sync_organ_dna(assimilate = 0, old_ue = prev_ue)

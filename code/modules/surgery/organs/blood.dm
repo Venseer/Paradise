@@ -2,6 +2,8 @@
 				BLOOD SYSTEM
 ****************************************************/
 
+#define EXOTIC_BLEED_MULTIPLIER 4 //Multiplies the actually bled amount by this number for the purposes of turf reaction calculations.
+
 /mob/living/carbon/human/proc/suppress_bloodloss(amount)
 	if(bleedsuppress)
 		return
@@ -18,7 +20,7 @@
 /mob/living/carbon/human/handle_blood()
 	var/list/blood_data = get_blood_data(get_blood_id())//PROCCEPTION
 
-	if(NO_BLOOD in species.species_traits)
+	if(NO_BLOOD in dna.species.species_traits)
 		bleed_rate = 0
 		return
 
@@ -43,14 +45,14 @@
 			if(BLOOD_VOLUME_OKAY to BLOOD_VOLUME_SAFE)
 				if(prob(5))
 					to_chat(src, "<span class='warning'>You feel [word].</span>")
-				apply_damage_type(round((BLOOD_VOLUME_NORMAL - blood_volume) * 0.01, 1), species.blood_damage_type)
+				apply_damage_type(round((BLOOD_VOLUME_NORMAL - blood_volume) * 0.01, 1), dna.species.blood_damage_type)
 			if(BLOOD_VOLUME_BAD to BLOOD_VOLUME_OKAY)
-				apply_damage_type(round((BLOOD_VOLUME_NORMAL - blood_volume) * 0.02, 1), species.blood_damage_type)
+				apply_damage_type(round((BLOOD_VOLUME_NORMAL - blood_volume) * 0.02, 1), dna.species.blood_damage_type)
 				if(prob(5))
 					EyeBlurry(6)
 					to_chat(src, "<span class='warning'>You feel very [word].</span>")
 			if(BLOOD_VOLUME_SURVIVE to BLOOD_VOLUME_BAD)
-				apply_damage_type(5, species.blood_damage_type)
+				apply_damage_type(5, dna.species.blood_damage_type)
 				if(prob(15))
 					Paralyse(rand(1,3))
 					to_chat(src, "<span class='warning'>You feel extremely [word].</span>")
@@ -64,7 +66,7 @@
 			var/obj/item/organ/external/BP = X
 			var/brutedamage = BP.brute_dam
 
-			if(BP.is_robotic())
+			if(BP.is_robotic() && !isSynthetic())
 				continue
 
 			//We want an accurate reading of .len
@@ -83,7 +85,7 @@
 		bleed_rate = max(bleed_rate - 0.5, temp_bleed)//if no wounds, other bleed effects (heparin) naturally decreases
 
 		if(internal_bleeding_rate && !(status_flags & FAKEDEATH))
-			bleed(internal_bleeding_rate)
+			bleed_internal(internal_bleeding_rate)
 
 		if(bleed_rate && !bleedsuppress && !(status_flags & FAKEDEATH))
 			bleed(bleed_rate)
@@ -99,12 +101,32 @@
 				add_splatter_floor(loc, 1)
 
 /mob/living/carbon/human/bleed(amt)
-	if(!(NO_BLOOD in species.species_traits))
+	if(!(NO_BLOOD in dna.species.species_traits))
 		..()
-		if(species.exotic_blood)
-			var/datum/reagent/R = chemical_reagents_list[get_blood_id()]
+		if(dna.species.exotic_blood)
+			var/datum/reagent/R = GLOB.chemical_reagents_list[get_blood_id()]
 			if(istype(R) && isturf(loc))
-				R.reaction_turf(get_turf(src), amt)
+				R.reaction_turf(get_turf(src), amt * EXOTIC_BLEED_MULTIPLIER)
+
+/mob/living/carbon/proc/bleed_internal(amt) // Return 1 if we've coughed blood up, 2 if we're vomited it.
+	if(blood_volume)
+		blood_volume = max(blood_volume - amt, 0)
+		if (prob(10 * amt)) // +5% chance per internal bleeding site that we'll cough up blood on a given tick.
+			custom_emote(1, "coughs up blood!")
+			add_splatter_floor(loc, 1)
+			return 1
+		else if (amt >= 1 && prob(5 * amt)) // +2.5% chance per internal bleeding site that we'll cough up blood on a given tick. Must be bleeding internally in more than one place to have a chance at this.
+			vomit(0, 1)
+			return 2
+	return 0
+
+/mob/living/carbon/human/bleed_internal(amt)
+	if(!(NO_BLOOD in dna.species.species_traits))
+		.=..()
+		if(dna.species.exotic_blood && .) // Do we have exotic blood, and have we left any on the ground?
+			var/datum/reagent/R = GLOB.chemical_reagents_list[get_blood_id()]
+			if(istype(R) && isturf(loc))
+				R.reaction_turf(get_turf(src), amt * EXOTIC_BLEED_MULTIPLIER)
 
 /mob/living/proc/restore_blood()
 	blood_volume = initial(blood_volume)
@@ -186,7 +208,7 @@
 		blood_data["blood_type"] = copytext(src.dna.b_type,1,0)
 		blood_data["gender"] = gender
 		blood_data["real_name"] = real_name
-		blood_data["blood_color"] = species.blood_color
+		blood_data["blood_color"] = dna.species.blood_color
 		blood_data["factions"] = faction
 		return blood_data
 
@@ -199,9 +221,9 @@
 		return "blood"
 
 /mob/living/carbon/human/get_blood_id()
-	if(species.exotic_blood)//some races may bleed water..or kethcup..
-		return species.exotic_blood
-	else if((NO_BLOOD in species.species_traits) || (NOCLONE in mutations))
+	if(dna.species.exotic_blood)//some races may bleed water..or kethcup..
+		return dna.species.exotic_blood
+	else if((NO_BLOOD in dna.species.species_traits) || (NOCLONE in mutations))
 		return
 	return "blood"
 
@@ -279,7 +301,7 @@
 		B.layer = BELOW_MOB_LAYER //So the blood lands ontop of things like posters, windows, etc.
 
 /mob/living/carbon/human/add_splatter_floor(turf/T, small_drip, shift_x, shift_y)
-	if(!(NO_BLOOD in species.species_traits))
+	if(!(NO_BLOOD in dna.species.species_traits))
 		..()
 
 /mob/living/carbon/alien/add_splatter_floor(turf/T, small_drip, shift_x, shift_y)

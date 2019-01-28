@@ -40,9 +40,9 @@
 			brainmob.loc = src
 			brainmob.container = src
 			brainmob.stat = CONSCIOUS
-			respawnable_list -= brainmob
-			dead_mob_list -= brainmob//Update dem lists
-			living_mob_list += brainmob
+			GLOB.respawnable_list -= brainmob
+			GLOB.dead_mob_list -= brainmob//Update dem lists
+			GLOB.living_mob_list += brainmob
 
 			held_brain = B
 			if(istype(O,/obj/item/organ/internal/brain/xeno)) // kept the type check, as it still does other weird stuff
@@ -121,10 +121,10 @@
 	brainmob.dna = H.dna.Clone()
 	brainmob.container = src
 
-	if(!istype(H.species) || isnull(H.species.return_organ("brain"))) // Diona/buggy people
+	if(!istype(H.dna.species) || isnull(H.dna.species.return_organ("brain"))) // Diona/buggy people
 		held_brain = new(src)
 	else // We have a species, and it has a brain
-		var/brain_path = H.species.return_organ("brain")
+		var/brain_path = H.dna.species.return_organ("brain")
 		if(!ispath(brain_path, /obj/item/organ/internal/brain))
 			brain_path = /obj/item/organ/internal/brain
 		held_brain = new brain_path(src) // Slime people will keep their slimy brains this way
@@ -146,8 +146,8 @@
 
 	brainmob.container = null//Reset brainmob mmi var.
 	brainmob.loc = held_brain//Throw mob into brain.
-	respawnable_list += brainmob
-	living_mob_list -= brainmob//Get outta here
+	GLOB.respawnable_list += brainmob
+	GLOB.living_mob_list -= brainmob//Get outta here
 	held_brain.brainmob = brainmob//Set the brain to use the brainmob
 	held_brain.brainmob.cancel_camera()
 	brainmob = null//Set mmi brainmob var to null

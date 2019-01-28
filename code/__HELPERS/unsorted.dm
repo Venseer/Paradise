@@ -248,7 +248,7 @@ Turf and target are seperate in case you want to teleport some distance from a t
 	var/pressure = air_contents.return_pressure()
 	var/total_moles = air_contents.total_moles()
 
-	to_chat(user, "<span class='notice'>Results of analysis of [bicon(icon)] [target].</span>")
+	user.show_message("<span class='notice'>Results of analysis of [bicon(icon)] [target].</span>", 1)
 	if(total_moles>0)
 		var/o2_concentration = air_contents.oxygen/total_moles
 		var/n2_concentration = air_contents.nitrogen/total_moles
@@ -257,16 +257,17 @@ Turf and target are seperate in case you want to teleport some distance from a t
 
 		var/unknown_concentration =  1-(o2_concentration+n2_concentration+co2_concentration+plasma_concentration)
 
-		to_chat(user, "<span class='notice'>Pressure: [round(pressure,0.1)] kPa</span>")
-		to_chat(user, "<span class='notice'>Nitrogen: [round(n2_concentration*100)] %</span>")
-		to_chat(user, "<span class='notice'>Oxygen: [round(o2_concentration*100)] %</span>")
-		to_chat(user, "<span class='notice'>CO2: [round(co2_concentration*100)] %</span>")
-		to_chat(user, "<span class='notice'>Plasma: [round(plasma_concentration*100)] %</span>")
+		user.show_message("<span class='notice'>Pressure: [round(pressure,0.1)] kPa</span>", 1)
+		user.show_message("<span class='notice'>Nitrogen: [round(n2_concentration*100)] % ([round(air_contents.nitrogen,0.01)] moles)</span>", 1)
+		user.show_message("<span class='notice'>Oxygen: [round(o2_concentration*100)] % ([round(air_contents.oxygen,0.01)] moles)</span>", 1)
+		user.show_message("<span class='notice'>CO2: [round(co2_concentration*100)] % ([round(air_contents.carbon_dioxide,0.01)] moles)</span>", 1)
+		user.show_message("<span class='notice'>Plasma: [round(plasma_concentration*100)] % ([round(air_contents.toxins,0.01)] moles)</span>", 1)
 		if(unknown_concentration>0.01)
-			to_chat(user, "<span class='danger'>Unknown: [round(unknown_concentration*100)] %</span>")
-		to_chat(user, "<span class='notice'>Temperature: [round(air_contents.temperature-T0C)] &deg;C</span>")
+			user.show_message("<span class='danger'>Unknown: [round(unknown_concentration*100)] % ([round(unknown_concentration*total_moles,0.01)] moles)</span>", 1)
+		user.show_message("<span class='notice'>Total: [round(total_moles,0.01)] moles</span>", 1)
+		user.show_message("<span class='notice'>Temperature: [round(air_contents.temperature-T0C)] &deg;C</span>", 1)
 	else
-		to_chat(user, "<span class='notice'>[target] is empty!</span>")
+		user.show_message("<span class='notice'>[target] is empty!</span>", 1)
 	return
 
 //Picks a string of symbols to display as the law number for hacked or ion laws
@@ -277,7 +278,7 @@ Turf and target are seperate in case you want to teleport some distance from a t
 /proc/freeborg()
 	var/select = null
 	var/list/borgs = list()
-	for(var/mob/living/silicon/robot/A in player_list)
+	for(var/mob/living/silicon/robot/A in GLOB.player_list)
 		if(A.stat == 2 || A.connected_ai || A.scrambledcodes || istype(A,/mob/living/silicon/robot/drone))
 			continue
 		var/name = "[A.real_name] ([A.modtype] [A.braintype])"
@@ -290,7 +291,7 @@ Turf and target are seperate in case you want to teleport some distance from a t
 //When a borg is activated, it can choose which AI it wants to be slaved to
 /proc/active_ais()
 	. = list()
-	for(var/mob/living/silicon/ai/A in living_mob_list)
+	for(var/mob/living/silicon/ai/A in GLOB.living_mob_list)
 		if(A.stat == DEAD)
 			continue
 		if(A.control_disabled == 1)
@@ -372,7 +373,7 @@ Turf and target are seperate in case you want to teleport some distance from a t
 //Orders mobs by type then by name
 /proc/sortmobs()
 	var/list/moblist = list()
-	var/list/sortmob = sortAtom(mob_list)
+	var/list/sortmob = sortAtom(GLOB.mob_list)
 	for(var/mob/living/silicon/ai/M in sortmob)
 		moblist.Add(M)
 		if(M.eyeobj)
@@ -427,7 +428,7 @@ Turf and target are seperate in case you want to teleport some distance from a t
 /proc/get_mob_by_ckey(key)
 	if(!key)
 		return
-	for(var/mob/M in mob_list)
+	for(var/mob/M in GLOB.mob_list)
 		if(M.ckey == key)
 			return M
 
@@ -996,7 +997,7 @@ proc/oview_or_orange(distance = world.view , center = usr , type)
 
 proc/get_mob_with_client_list()
 	var/list/mobs = list()
-	for(var/mob/M in mob_list)
+	for(var/mob/M in GLOB.mob_list)
 		if(M.client)
 			mobs += M
 	return mobs
@@ -1150,6 +1151,11 @@ var/global/list/common_tools = list(
 		return 1
 	return 0
 
+/proc/ispowertool(O)//used to check if a tool can force powered doors
+	if(istype(O, /obj/item/crowbar/power) || istype(O, /obj/item/mecha_parts/mecha_equipment/medical/rescue_jaw))
+		return TRUE
+	return FALSE
+
 /proc/iswire(O)
 	if(istype(O, /obj/item/stack/cable_coil))
 		return 1
@@ -1226,7 +1232,7 @@ var/global/list/common_tools = list(
 //check if mob is lying down on something we can operate him on.
 /proc/can_operate(mob/living/carbon/M)
 	return (locate(/obj/machinery/optable, M.loc) && (M.lying || M.resting)) || \
-	(locate(/obj/structure/stool/bed/roller, M.loc) && 	\
+	(locate(/obj/structure/bed/roller, M.loc) && 	\
 	(M.buckled || M.lying || M.weakened || M.stunned || M.paralysis || M.sleeping || M.stat)) && prob(75) || 	\
 	(locate(/obj/structure/table/, M.loc) && 	\
 	(M.lying || M.weakened || M.stunned || M.paralysis || M.sleeping || M.stat) && prob(66))
@@ -1490,12 +1496,16 @@ var/mob/dview/dview_mob = new
 	invisibility = 101
 	density = 0
 
-	anchored = 1
+	move_resist = INFINITY
 	simulated = 0
 
 	see_in_dark = 1e6
 
 /mob/dview/New() //For whatever reason, if this isn't called, then BYOND will throw a type mismatch runtime when attempting to add this to the mobs list. -Fox
+
+/mob/dview/Destroy()
+	// should never be deleted
+	return QDEL_HINT_LETMELIVE
 
 /proc/IsValidSrc(A)
 	if(istype(A, /datum))
@@ -1781,28 +1791,99 @@ var/mob/dview/dview_mob = new
 	for(var/type in types)
 		var/typename = "[type]"
 		var/static/list/TYPES_SHORTCUTS = list(
+			//longest paths comes first - otherwise they get shadowed by the more generic ones
 			/obj/effect/decal/cleanable = "CLEANABLE",
-			/obj/item/radio/headset = "HEADSET",
-			/obj/item/clothing/head/helmet/space = "SPESSHELMET",
-			/obj/item/book/manual = "MANUAL",
-			/obj/item/reagent_containers/food/drinks = "DRINK", //longest paths comes first
-			/obj/item/reagent_containers/food = "FOOD",
-			/obj/item/reagent_containers = "REAGENT_CONTAINERS",
-			/obj/item = "WEAPON",
-			/obj/machinery/atmospherics = "ATMOS_MECH",
-			/obj/machinery/portable_atmospherics = "PORT_ATMOS",
-			/obj/item/mecha_parts/mecha_equipment/weapon/ballistic/missile_rack = "MECHA_MISSILE_RACK",
-			/obj/item/mecha_parts/mecha_equipment = "MECHA_EQUIP",
-			/obj/item/organ = "ORGAN",
-			/obj/item = "ITEM",
-			/obj/machinery = "MACHINERY",
 			/obj/effect = "EFFECT",
+			/obj/item/ammo_casing = "AMMO",
+			/obj/item/book/manual = "MANUAL",
+			/obj/item/borg/upgrade = "BORG_UPGRADE",
+			/obj/item/cartridge = "PDA_CART",
+			/obj/item/clothing/head/helmet/space = "SPESSHELMET",
+			/obj/item/clothing/head = "HEAD",
+			/obj/item/clothing/under = "UNIFORM",
+			/obj/item/clothing/shoes = "SHOES",
+			/obj/item/clothing/suit = "SUIT",
+			/obj/item/clothing/gloves = "GLOVES",
+			/obj/item/clothing/mask/cigarette = "CIGARRETE", // oof
+			/obj/item/clothing/mask = "MASK",
+			/obj/item/clothing/glasses = "GLASSES",
+			/obj/item/clothing = "CLOTHING",
+			/obj/item/grenade/clusterbuster = "CLUSTERBUSTER",
+			/obj/item/grenade = "GRENADE",
+			/obj/item/gun = "GUN",
+			/obj/item/implant = "IMPLANT",
+			/obj/item/mecha_parts/mecha_equipment/weapon/ballistic/missile_rack = "MECHA_MISSILE_RACK",
+			/obj/item/mecha_parts/mecha_equipment/weapon = "MECHA_WEAPON",
+			/obj/item/mecha_parts/mecha_equipment = "MECHA_EQUIP",
+			/obj/item/melee = "MELEE",
+			/obj/item/mmi = "MMI",
+			/obj/item/nullrod = "NULLROD",
+			/obj/item/organ/external = "EXT_ORG",
+			/obj/item/organ/internal/cyberimp = "CYBERIMP",
+			/obj/item/organ/internal = "INT_ORG",
+			/obj/item/organ = "ORGAN",
+			/obj/item/pda = "PDA",
+			/obj/item/projectile = "PROJ",
+			/obj/item/radio/headset = "HEADSET",
+			/obj/item/reagent_containers/glass/beaker = "BEAKER",
+			/obj/item/reagent_containers/glass/bottle = "BOTTLE",
+			/obj/item/reagent_containers/food/pill/patch = "PATCH",
+			/obj/item/reagent_containers/food/pill = "PILL",
+			/obj/item/reagent_containers/food/drinks = "DRINK",
+			/obj/item/reagent_containers/food = "FOOD",
+			/obj/item/reagent_containers/syringe = "SYRINGE",
+			/obj/item/reagent_containers = "REAGENT_CONTAINERS",
+			/obj/item/robot_parts = "ROBOT_PARTS",
+			/obj/item/seeds = "SEED",
+			/obj/item/slime_extract = "SLIME_CORE",
+			/obj/item/spacepod_equipment/weaponry = "POD_WEAPON",
+			/obj/item/spacepod_equipment = "POD_EQUIP",
+			/obj/item/stack/sheet/mineral = "MINERAL",
+			/obj/item/stack/sheet = "SHEET",
+			/obj/item/stack/tile = "TILE",
+			/obj/item/stack = "STACK",
+			/obj/item/stock_parts/cell = "POWERCELL",
+			/obj/item/stock_parts = "STOCK_PARTS",
+			/obj/item/storage/firstaid = "FIRSTAID",
+			/obj/item/storage = "STORAGE",
+			/obj/item/tank = "GAS_TANK",
+			/obj/item/toy/crayon = "CRAYON",
+			/obj/item/toy = "TOY",
+			/obj/item = "ITEM",
+			/obj/machinery/atmospherics = "ATMOS_MACH",
+			/obj/machinery/computer = "CONSOLE",
+			/obj/machinery/door/airlock = "AIRLOCK",
+			/obj/machinery/door = "DOOR",
+			/obj/machinery/kitchen_machine = "KITCHEN",
+			/obj/machinery/portable_atmospherics/canister = "CANISTER",
+			/obj/machinery/portable_atmospherics = "PORT_ATMOS",
+			/obj/machinery/power = "POWER",
+			/obj/machinery/telecomms = "TCOMMS",
+			/obj/machinery = "MACHINERY",
+			/obj/mecha = "MECHA",
+			/obj/structure/closet/crate = "CRATE",
+			/obj/structure/closet = "CLOSET",
+			/obj/structure/statue = "STATUE",
+			/obj/structure/chair = "CHAIR", // oh no
+			/obj/structure/bed = "BED",
+			/obj/structure/chair/stool = "STOOL",
+			/obj/structure/table = "TABLE",
+			/obj/structure = "STRUCTURE",
+			/obj/vehicle = "VEHICLE",
 			/obj = "O",
 			/datum = "D",
-			/turf/simulated/floor = "FLOOR",
-			/turf/simulated/wall = "WALL",
+			/turf/simulated/floor = "SIM_FLOOR",
+			/turf/simulated/wall = "SIM_WALL",
+			/turf/unsimulated/floor = "UNSIM_FLOOR",
+			/turf/unsimulated/wall = "UNSIM_WALL",
 			/turf = "T",
+			/mob/living/carbon/alien = "XENO",
+			/mob/living/carbon/human = "HUMAN",
 			/mob/living/carbon = "CARBON",
+			/mob/living/silicon/robot = "CYBORG",
+			/mob/living/silicon/ai = "AI",
+			/mob/living/silicon = "SILICON",
+			/mob/living/simple_animal/bot = "BOT",
 			/mob/living/simple_animal = "SIMPLE",
 			/mob/living = "LIVING",
 			/mob = "M"
@@ -1879,7 +1960,7 @@ var/mob/dview/dview_mob = new
 		pois[name] = M
 
 	if(!mobs_only)
-		for(var/atom/A in poi_list)
+		for(var/atom/A in GLOB.poi_list)
 			if(!A || !A.loc)
 				continue
 			var/name = A.name

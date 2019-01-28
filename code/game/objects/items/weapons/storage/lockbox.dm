@@ -67,7 +67,7 @@
 		origin_tech = null //wipe out any origin tech if it's unlocked in any way so you can't double-dip tech levels at R&D.
 		return
 
-/obj/item/storage/lockbox/hear_talk(mob/living/M as mob, msg)
+/obj/item/storage/lockbox/hear_talk(mob/living/M as mob, list/message_pieces)
 
 /obj/item/storage/lockbox/hear_message(mob/living/M as mob, msg)
 
@@ -123,3 +123,13 @@
 	new /obj/item/clothing/accessory/medal/conduct(src)
 	new /obj/item/clothing/accessory/medal/conduct(src)
 	new /obj/item/clothing/accessory/medal/gold/captain(src)
+
+/obj/item/storage/lockbox/t4
+	name = "lockbox (T4)"
+	desc = "Contains three T4 breaching charges."
+	req_access = list(access_cent_specops)
+
+/obj/item/storage/lockbox/t4/New()
+	..()
+	for(var/i = 0, i < 3, i++)
+		new /obj/item/grenade/plastic/x4/thermite(src)

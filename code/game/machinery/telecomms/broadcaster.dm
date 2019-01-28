@@ -15,7 +15,7 @@ var/message_delay = 0 // To make sure restarting the recentmessages list is kept
 	desc = "A dish-shaped machine used to broadcast processed subspace signals."
 	density = 1
 	anchored = 1
-	use_power = 1
+	use_power = IDLE_POWER_USE
 	idle_power_usage = 25
 	machinetype = 5
 	circuitboard = /obj/item/circuitboard/telecomms/broadcaster
@@ -57,7 +57,7 @@ var/message_delay = 0 // To make sure restarting the recentmessages list is kept
 							  signal.data["name"], signal.data["job"],
 							  signal.data["realname"], signal.data["vname"],,
 							  signal.data["compression"], signal.data["level"], signal.frequency,
-							  signal.data["verb"], signal.data["language"]	)
+							  signal.data["verb"]	)
 
 
 	   /** #### - Simple Broadcast - #### **/
@@ -83,7 +83,7 @@ var/message_delay = 0 // To make sure restarting the recentmessages list is kept
 							  signal.data["radio"], signal.data["message"],
 							  signal.data["name"], signal.data["job"],
 							  signal.data["realname"], signal.data["vname"], 4, signal.data["compression"], signal.data["level"], signal.frequency,
-							  signal.data["verb"], signal.data["language"])
+							  signal.data["verb"])
 
 		if(!message_delay)
 			message_delay = 1
@@ -113,7 +113,7 @@ var/message_delay = 0 // To make sure restarting the recentmessages list is kept
 	desc = "A compact machine used for portable subspace telecommuniations processing."
 	density = 1
 	anchored = 1
-	use_power = 0
+	use_power = NO_POWER_USE
 	idle_power_usage = 0
 	machinetype = 6
 	var/intercept = 0 // if nonzero, broadcasts all messages to syndicate channel
@@ -146,7 +146,7 @@ var/message_delay = 0 // To make sure restarting the recentmessages list is kept
 							  signal.data["radio"], signal.data["message"],
 							  signal.data["name"], signal.data["job"],
 							  signal.data["realname"], signal.data["vname"],, signal.data["compression"], list(0), connection.frequency,
-							  signal.data["verb"], signal.data["language"])
+							  signal.data["verb"])
 		else
 			if(intercept)
 				Broadcast_Message(signal.data["connection"], signal.data["mob"],
@@ -154,7 +154,7 @@ var/message_delay = 0 // To make sure restarting the recentmessages list is kept
 							  signal.data["radio"], signal.data["message"],
 							  signal.data["name"], signal.data["job"],
 							  signal.data["realname"], signal.data["vname"], 3, signal.data["compression"], list(0), connection.frequency,
-							  signal.data["verb"], signal.data["language"])
+							  signal.data["verb"])
 
 #define CREW_RADIO_TYPE 0
 #define CENTCOMM_RADIO_TYPE 1
@@ -167,15 +167,15 @@ var/message_delay = 0 // To make sure restarting the recentmessages list is kept
 			old_type = SYNDICATE_RADIO_TYPE
 		if(new_freq == antag_freq)
 			new_type = SYNDICATE_RADIO_TYPE
-			
+
 	for(var/cent_freq in CENT_FREQS)
 		if(old_freq == cent_freq)
 			old_type = CENTCOMM_RADIO_TYPE
 		if(new_freq == cent_freq)
 			new_type = CENTCOMM_RADIO_TYPE
-			
+
 	return new_type > old_type
-	
+
 /**
 
 	Here is the big, bad function that broadcasts a message given the appropriate
@@ -234,9 +234,9 @@ var/message_delay = 0 // To make sure restarting the recentmessages list is kept
 **/
 
 /proc/Broadcast_Message(var/datum/radio_frequency/connection, var/mob/M,
-						var/vmask, var/vmessage, var/obj/item/radio/radio,
-						var/message, var/name, var/job, var/realname, var/vname,
-						var/data, var/compression, var/list/level, var/freq, var/verbage = "says", var/datum/language/speaking = null,
+						var/vmask, list/vmessage_pieces, var/obj/item/radio/radio,
+						list/message_pieces, var/name, var/job, var/realname, var/vname,
+						var/data, var/compression, var/list/level, var/freq, var/verbage = "says",
 						var/atom/follow_target = null)
 
 
@@ -246,11 +246,11 @@ var/message_delay = 0 // To make sure restarting the recentmessages list is kept
 
 	var/bad_connection = FALSE
 	var/datum/radio_frequency/new_connection = connection
-	
+
 	if(connection.frequency != display_freq)
 		bad_connection = Is_Bad_Connection(connection.frequency, display_freq)
 		new_connection = radio_controller.return_frequency(display_freq)
-	
+
 	var/list/obj/item/radio/radios = list()
 
 	// --- Broadcast only to intercom devices ---
@@ -339,7 +339,7 @@ var/message_delay = 0 // To make sure restarting the recentmessages list is kept
 
 		else
 			// - The speaker has a prespecified "voice message" to display if not understood -
-			if(vmessage)
+			if(vmessage_pieces)
 				heard_voice += R
 
 			// - Just display a garbled message -
@@ -364,12 +364,11 @@ var/message_delay = 0 // To make sure restarting the recentmessages list is kept
 
 
 		// --- Filter the message; place it in quotes apply a verb ---
-
 		var/quotedmsg = null
 		if(M)
-			quotedmsg = M.say_quote(message)
+			quotedmsg = "[M.say_quote(multilingual_to_message(message_pieces))], \"[multilingual_to_message(message_pieces)]\""
 		else
-			quotedmsg = "says, \"[message]\""
+			quotedmsg = "says, \"[multilingual_to_message(message_pieces)]\""
 
 		// --- This following recording is intended for research and feedback in the use of department radio channels ---
 
@@ -414,38 +413,38 @@ var/message_delay = 0 // To make sure restarting the recentmessages list is kept
 
 		if(length(heard_masked))
 			for(var/mob/R in heard_masked)
-				R.hear_radio(message,verbage, speaking, part_a, part_b, M, 0, name, follow_target=follow_target)
+				R.hear_radio(message_pieces, verbage, part_a, part_b, M, 0, name, follow_target=follow_target)
 
 		/* --- Process all the mobs that heard the voice normally (understood) --- */
 
 		if(length(heard_normal))
 			for(var/mob/R in heard_normal)
-				R.hear_radio(message, verbage, speaking, part_a, part_b, M, 0, realname, follow_target=follow_target)
+				R.hear_radio(message_pieces, verbage, part_a, part_b, M, 0, realname, follow_target=follow_target)
 
 		/* --- Process all the mobs that heard the voice normally (did not understand) --- */
 
 		if(length(heard_voice))
 			for(var/mob/R in heard_voice)
-				R.hear_radio(message,verbage, speaking, part_a, part_b, M,0, vname, follow_target=follow_target)
+				R.hear_radio(message_pieces, verbage, part_a, part_b, M,0, vname, follow_target=follow_target)
 
 		/* --- Process all the mobs that heard a garbled voice (did not understand) --- */
 			// Displays garbled message (ie "f*c* **u, **i*er!")
 
 		if(length(heard_garbled))
 			for(var/mob/R in heard_garbled)
-				R.hear_radio(message, verbage, speaking, part_a, part_b, M, 1, vname, follow_target=follow_target)
+				R.hear_radio(message_pieces, verbage, part_a, part_b, M, 1, vname, follow_target=follow_target)
 
 
 		/* --- Complete gibberish. Usually happens when there's a compressed message --- */
 
 		if(length(heard_gibberish))
 			for(var/mob/R in heard_gibberish)
-				R.hear_radio(message, verbage, speaking, part_a, part_b, M, 1, follow_target=follow_target)
+				R.hear_radio(message_pieces, verbage, part_a, part_b, M, 1, follow_target=follow_target)
 
 	return 1
 
-/proc/Broadcast_SimpleMessage(var/source, var/frequency, var/text, var/data, var/mob/M, var/compression, var/level)
-
+/proc/Broadcast_SimpleMessage(var/source, var/frequency, list/message_pieces, var/data, var/mob/M, var/compression, var/level)
+	var/text = multilingual_to_message(message_pieces)
   /* ###### Prepare the radio connection ###### */
 
 	var/mob/living/carbon/human/H

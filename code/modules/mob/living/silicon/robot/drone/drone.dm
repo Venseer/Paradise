@@ -17,7 +17,6 @@
 	ventcrawler = 2
 	magpulse = 1
 	mob_size = MOB_SIZE_SMALL
-	default_language = "Drone"
 
 	// We need to keep track of a few module items so we don't need to do list operations
 	// every time we need them. These get set in New() after the module is chosen.
@@ -38,7 +37,6 @@
 
 
 /mob/living/silicon/robot/drone/New()
-
 	..()
 
 	remove_language("Robot Talk")
@@ -132,7 +130,7 @@
 				to_chat(user, "<span class='warning'>The interface is fried, and a distressing burned smell wafts from the robot's interior. You're not rebooting this one.</span>")
 				return
 
-			if(!allowed(usr))
+			if(!allowed(W))
 				to_chat(user, "<span class='warning'>Access denied.</span>")
 				return
 
@@ -158,7 +156,7 @@
 			if(emagged)
 				return
 
-			if(allowed(usr))
+			if(allowed(W))
 				shut_down()
 			else
 				to_chat(user, "<span class='warning'>Access denied.</span>")
@@ -215,33 +213,17 @@
 //DRONE LIFE/DEATH
 
 //For some goddamn reason robots have this hardcoded. Redefining it for our fragile friends here.
-/mob/living/silicon/robot/drone/updatehealth()
+/mob/living/silicon/robot/drone/updatehealth(reason = "none given")
 	if(status_flags & GODMODE)
 		health = 35
 		stat = CONSCIOUS
 		return
 	health = 35 - (getBruteLoss() + getFireLoss())
-	return
-
-//Easiest to check this here, then check again in the robot proc.
-//Standard robots use config for crit, which is somewhat excessive for these guys.
-//Drones killed by damage will gib.
-/mob/living/silicon/robot/drone/handle_regular_status_updates()
-
-	if(health <= -35 && src.stat != DEAD)
-		timeofdeath = world.time
-		death() //Possibly redundant, having trouble making death() cooperate.
-		gib()
-		return
-	return ..() // If you don't return anything here, you won't update status effects, like weakening
+	update_stat("updatehealth([reason])")
 
 /mob/living/silicon/robot/drone/death(gibbed)
-
-	if(module)
-		var/obj/item/gripper/G = locate(/obj/item/gripper) in module
-		if(G) G.drop_item()
-
-	..(gibbed)
+	. = ..(gibbed)
+	ghostize(can_reenter_corpse = 0)
 
 
 //CONSOLE PROCS
@@ -274,7 +256,7 @@
 //Reboot procs.
 
 /mob/living/silicon/robot/drone/proc/request_player()
-	for(var/mob/dead/observer/O in player_list)
+	for(var/mob/dead/observer/O in GLOB.player_list)
 		if(cannotPossess(O))
 			continue
 		if(jobban_isbanned(O,"nonhumandept") || jobban_isbanned(O,"Drone"))

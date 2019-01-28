@@ -1,4 +1,4 @@
-/mob/living/New()
+/mob/living/Initialize()
 	. = ..()
 	var/datum/atom_hud/data/human/medical/advanced/medhud = huds[DATA_HUD_MEDICAL_ADVANCED]
 	medhud.add_to_hud(src)
@@ -50,7 +50,7 @@
 		if(ObjBump(A))
 			return
 	if(istype(A, /atom/movable))
-		if(PushAM(A))
+		if(PushAM(A, move_force))
 			return
 
 //Called when we bump into a mob
@@ -127,32 +127,41 @@
 	return
 
 //Called when we want to push an atom/movable
-/mob/living/proc/PushAM(atom/movable/AM)
+/mob/living/proc/PushAM(atom/movable/AM, force = move_force)
 	if(now_pushing)
-		return 1
+		return TRUE
 	if(moving_diagonally) // no pushing during diagonal moves
-		return 1
+		return TRUE
 	if(!client && (mob_size < MOB_SIZE_SMALL))
 		return
-	if(!AM.anchored)
-		now_pushing = 1
-		var/t = get_dir(src, AM)
-		if(istype(AM, /obj/structure/window))
-			var/obj/structure/window/W = AM
-			if(W.fulltile)
-				for(var/obj/structure/window/win in get_step(W, t))
-					now_pushing = 0
-					return
-		if(pulling == AM)
-			stop_pulling()
-		var/current_dir
-		if(isliving(AM))
-			current_dir = AM.dir
-		step(AM, t)
-		if(current_dir)
-			AM.setDir(current_dir)
-		now_pushing = 0
-
+	now_pushing = TRUE
+	var/t = get_dir(src, AM)
+	var/push_anchored = FALSE
+	if((AM.move_resist * MOVE_FORCE_CRUSH_RATIO) <= force)
+		if(move_crush(AM, move_force, t))
+			push_anchored = TRUE
+	if((AM.move_resist * MOVE_FORCE_FORCEPUSH_RATIO) <= force)			//trigger move_crush and/or force_push regardless of if we can push it normally
+		if(force_push(AM, move_force, t, push_anchored))
+			push_anchored = TRUE
+	if((AM.anchored && !push_anchored) || (force < (AM.move_resist * MOVE_FORCE_PUSH_RATIO)))
+		now_pushing = FALSE
+		return
+	if(istype(AM, /obj/structure/window))
+		var/obj/structure/window/W = AM
+		if(W.fulltile)
+			for(var/obj/structure/window/win in get_step(W,t))
+				now_pushing = FALSE
+				return
+	if(pulling == AM)
+		stop_pulling()
+	var/current_dir
+	if(isliving(AM))
+		current_dir = AM.dir
+	if(step(AM, t))
+		step(src, t)
+	if(current_dir)
+		AM.setDir(current_dir)
+	now_pushing = FALSE
 
 /mob/living/Stat()
 	. = ..()
@@ -187,9 +196,20 @@
 	set name = "Pull"
 	set category = "Object"
 
-	if(AM.Adjacent(src))
+	if(istype(AM) && Adjacent(AM))
 		start_pulling(AM)
-	return
+	else
+		stop_pulling()
+
+/mob/living/stop_pulling()
+	..()
+	if(pullin)
+		pullin.update_icon(src)
+
+/mob/living/verb/stop_pulling1()
+	set name = "Stop Pulling"
+	set category = "IC"
+	stop_pulling()
 
 //same as above
 /mob/living/pointed(atom/A as mob|obj|turf in view())
@@ -214,16 +234,14 @@
 /mob/living/verb/succumb()
 	set hidden = 1
 	if(InCritical())
-		attack_log += "[src] has ["succumbed to death"] with [round(health, 0.1)] points of health!"
+		create_attack_log("[src] has ["succumbed to death"] with [round(health, 0.1)] points of health!")
 		adjustOxyLoss(health - config.health_threshold_dead)
-		updatehealth()
 		// super check for weird mobs, including ones that adjust hp
 		// we don't want to go overboard and gib them, though
 		for(var/i = 1 to 5)
 			if(health < config.health_threshold_dead)
 				break
 			take_overall_damage(max(5, health - config.health_threshold_dead), 0)
-			updatehealth()
 		to_chat(src, "<span class='notice'>You have given up life and succumbed to death.</span>")
 
 /mob/living/proc/InCritical()
@@ -233,12 +251,15 @@
 	..()
 	flash_eyes()
 
-/mob/living/proc/updatehealth()
+/mob/living/proc/updatehealth(reason = "none given")
 	if(status_flags & GODMODE)
 		health = maxHealth
 		stat = CONSCIOUS
 		return
 	health = maxHealth - getOxyLoss() - getToxLoss() - getFireLoss() - getBruteLoss() - getCloneLoss()
+
+	update_stat("updatehealth([reason])")
+	handle_hud_icons_health()
 	med_hud_set_health()
 
 
@@ -266,89 +287,6 @@
 //	if(istype(src, /mob/living/carbon/human))
 //		to_chat(world, "[src] ~ [bodytemperature] ~ [temperature]")
 	return temperature
-
-
-// ++++ROCKDTBEN++++ MOB PROCS -- Ask me before touching.
-// Stop! ... Hammertime! ~Carn
-// I touched them without asking... I'm soooo edgy ~Erro (added nodamage checks)
-// no ~Tigerkitty
-
-/mob/living/proc/getBruteLoss()
-	return bruteloss
-
-/mob/living/proc/adjustBruteLoss(var/amount)
-	if(status_flags & GODMODE)	return 0	//godmode
-	bruteloss = min(max(bruteloss + amount, 0),(maxHealth*2))
-
-/mob/living/proc/getOxyLoss()
-	return oxyloss
-
-/mob/living/proc/adjustOxyLoss(var/amount)
-	if(status_flags & GODMODE)	return 0	//godmode
-	oxyloss = min(max(oxyloss + amount, 0),(maxHealth*2))
-
-/mob/living/proc/setOxyLoss(var/amount)
-	if(status_flags & GODMODE)	return 0	//godmode
-	oxyloss = amount
-
-/mob/living/proc/getToxLoss()
-	return toxloss
-
-/mob/living/proc/adjustToxLoss(var/amount)
-	if(status_flags & GODMODE)	return 0	//godmode
-	toxloss = min(max(toxloss + amount, 0),(maxHealth*2))
-
-/mob/living/proc/setToxLoss(var/amount)
-	if(status_flags & GODMODE)	return 0	//godmode
-	toxloss = amount
-
-/mob/living/proc/getFireLoss()
-	return fireloss
-
-/mob/living/proc/adjustFireLoss(var/amount)
-	if(status_flags & GODMODE)	return 0	//godmode
-	fireloss = min(max(fireloss + amount, 0),(maxHealth*2))
-
-/mob/living/proc/getCloneLoss()
-	return cloneloss
-
-/mob/living/proc/adjustCloneLoss(var/amount)
-	if(status_flags & GODMODE)	return 0	//godmode
-	cloneloss = min(max(cloneloss + amount, 0),(maxHealth*2))
-
-/mob/living/proc/setCloneLoss(var/amount)
-	if(status_flags & GODMODE)	return 0	//godmode
-	cloneloss = amount
-
-/mob/living/proc/getBrainLoss()
-	return brainloss
-
-/mob/living/proc/adjustBrainLoss(var/amount)
-	if(status_flags & GODMODE)	return 0	//godmode
-	brainloss = min(max(brainloss + amount, 0),(maxHealth*2))
-
-/mob/living/proc/setBrainLoss(var/amount)
-	if(status_flags & GODMODE)	return 0	//godmode
-	brainloss = amount
-
-/mob/living/proc/getStaminaLoss()
-	return staminaloss
-
-/mob/living/proc/adjustStaminaLoss(var/amount)
-	if(status_flags & GODMODE)	return 0
-	staminaloss = min(max(staminaloss + amount, 0),(maxHealth*2))
-
-/mob/living/proc/setStaminaLoss(var/amount)
-	if(status_flags & GODMODE)	return 0
-	staminaloss = amount
-
-/mob/living/proc/getMaxHealth()
-	return maxHealth
-
-/mob/living/proc/setMaxHealth(var/newMaxHealth)
-	maxHealth = newMaxHealth
-
-// ++++ROCKDTBEN++++ MOB PROCS //END
 
 
 /mob/proc/get_contents()
@@ -411,7 +349,13 @@
 
 
 /mob/living/proc/can_inject()
-	return 1
+	return TRUE
+
+/mob/living/is_injectable(allowmobs = TRUE)
+	return (allowmobs && reagents && can_inject())
+
+/mob/living/is_drawable(allowmobs = TRUE)
+	return (allowmobs && reagents && can_inject())
 
 /mob/living/proc/get_organ_target()
 	var/mob/shooter = src
@@ -420,35 +364,6 @@
 		t = "head"
 	var/obj/item/organ/external/def_zone = ran_zone(t)
 	return def_zone
-
-// heal ONE external organ, organ gets randomly selected from damaged ones.
-/mob/living/proc/heal_organ_damage(var/brute, var/burn)
-	adjustBruteLoss(-brute)
-	adjustFireLoss(-burn)
-	updatehealth()
-
-// damage ONE external organ, organ gets randomly selected from damaged ones.
-/mob/living/proc/take_organ_damage(var/brute, var/burn)
-	if(status_flags & GODMODE)	return 0	//godmode
-	adjustBruteLoss(brute)
-	adjustFireLoss(burn)
-	updatehealth()
-
-// heal MANY external organs, in random order
-/mob/living/proc/heal_overall_damage(var/brute, var/burn)
-	adjustBruteLoss(-brute)
-	adjustFireLoss(-burn)
-	updatehealth()
-
-// damage MANY external organs, in random order
-/mob/living/proc/take_overall_damage(var/brute, var/burn, var/used_weapon = null)
-	if(status_flags & GODMODE)	return 0	//godmode
-	adjustBruteLoss(brute)
-	adjustFireLoss(burn)
-	updatehealth()
-
-/mob/living/proc/has_organic_damage()
-	return (maxHealth - health)
 
 
 /mob/living/proc/restore_all_organs()
@@ -470,10 +385,11 @@
 		C.update_inv_legcuffed()
 
 		if(C.reagents)
-			for(var/datum/reagent/R in C.reagents.reagent_list)
-				C.reagents.clear_reagents()
-			C.reagents.addiction_list.Cut()
+			C.reagents.clear_reagents()
+			QDEL_LIST(C.reagents.addiction_list)
 
+// rejuvenate: Called by `revive` to get the mob into a revivable state
+// the admin "rejuvenate" command calls `revive`, not this proc.
 /mob/living/proc/rejuvenate()
 	var/mob/living/carbon/human/human_mob = null //Get this declared for use later.
 
@@ -496,7 +412,6 @@
 	radiation = 0
 	SetDruggy(0)
 	SetHallucinate(0)
-	blinded = 0
 	nutrition = NUTRITION_LEVEL_FED + 50
 	bodytemperature = 310
 	CureBlind()
@@ -509,8 +424,7 @@
 	CureNervous()
 	SetEyeBlind(0)
 	SetEyeBlurry(0)
-	SetEarDamage(0)
-	SetEarDeaf(0)
+	RestoreEars()
 	heal_overall_damage(1000, 1000)
 	ExtinguishMob()
 	fire_stacks = 0
@@ -544,11 +458,10 @@
 	restore_all_organs()
 	surgeries.Cut() //End all surgeries.
 	if(stat == DEAD)
-		dead_mob_list -= src
-		living_mob_list += src
-		timeofdeath = 0
+		update_revive()
+	else if(stat == UNCONSCIOUS)
+		WakeUp()
 
-	stat = CONSCIOUS
 	update_fire()
 	regenerate_icons()
 	restore_blood()
@@ -595,6 +508,7 @@
 	var/turf/T = loc
 	. = ..()
 	if(.)
+		SEND_SIGNAL(src, COMSIG_MOVABLE_MOVED)
 		handle_footstep(loc)
 		step_count++
 
@@ -660,14 +574,14 @@
 						TH.transfer_mob_blood_dna(src)
 						if(ishuman(src))
 							var/mob/living/carbon/human/H = src
-							if(H.species.blood_color)
-								TH.color = H.species.blood_color
+							if(H.dna.species.blood_color)
+								TH.color = H.dna.species.blood_color
 						else
 							TH.color = "#A10808"
 
 /mob/living/carbon/human/makeTrail(turf/T)
 
-	if((NO_BLOOD in species.species_traits) || species.exotic_blood || !bleed_rate || bleedsuppress)
+	if((NO_BLOOD in dna.species.species_traits) || dna.species.exotic_blood || !bleed_rate || bleedsuppress)
 		return
 	..()
 
@@ -959,6 +873,37 @@
 		return 0
 	return 1
 
+/mob/living/start_pulling(atom/movable/AM, state, force = pull_force, supress_message = FALSE)
+	if(!AM || !src)
+		return FALSE
+	if(!(AM.can_be_pulled(src, state, force)))
+		return FALSE
+	if(incapacitated())
+		return
+	// If we're pulling something then drop what we're currently pulling and pull this instead.
+	AM.add_fingerprint(src)
+	if(pulling)
+		if(AM == pulling)// Are we trying to pull something we are already pulling? Then just stop here, no need to continue.
+			return
+		stop_pulling()
+		if(AM.pulledby)
+			visible_message("<span class='danger'>[src] has pulled [AM] from [AM.pulledby]'s grip.</span>")
+			AM.pulledby.stop_pulling() //an object can't be pulled by two mobs at once.
+	pulling = AM
+	AM.pulledby = src
+	if(pullin)
+		pullin.update_icon(src)
+	if(ismob(AM))
+		var/mob/M = AM
+		if(!iscarbon(src))
+			M.LAssailant = null
+		else
+			M.LAssailant = usr
+
+/mob/living/proc/check_pull()
+	if(pulling && !(pulling in orange(1)))
+		stop_pulling()
+
 /mob/living/proc/get_taste_sensitivity()
 	return 1
 
@@ -996,3 +941,38 @@
 		return
 
 	to_chat(src, "<span class='notice'>You can taste [english_list(final_taste_list)].</span>")
+
+/mob/living/proc/owns_soul()
+	if(mind)
+		return mind.soulOwner == mind
+	return 1
+
+/mob/living/proc/return_soul()
+	if(mind)
+		if(mind.soulOwner.devilinfo)//Not sure how this could happen, but whatever.
+			mind.soulOwner.devilinfo.remove_soul(mind)
+		mind.soulOwner = mind
+		mind.damnation_type = 0
+
+/mob/living/proc/has_bane(banetype)
+	if(mind)
+		if(mind.devilinfo)
+			return mind.devilinfo.bane == banetype
+	return 0
+
+/mob/living/proc/check_weakness(obj/item/weapon, mob/living/attacker)
+	if(mind && mind.devilinfo)
+		return check_devil_bane_multiplier(weapon, attacker)
+	return 1
+
+/mob/living/proc/check_acedia()
+	if(src.mind && src.mind.objectives)
+		for(var/datum/objective/sintouched/acedia/A in src.mind.objectives)
+			return 1
+	return 0
+
+/mob/living/proc/fakefireextinguish()
+	return
+
+/mob/living/proc/fakefire()
+	return

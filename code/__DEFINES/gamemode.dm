@@ -3,6 +3,7 @@
 #define TARGET_INVALID_NOT_HUMAN	2
 #define TARGET_INVALID_DEAD			3
 #define TARGET_INVALID_NOCKEY		4
+#define TARGET_INVALID_UNREACHABLE	5
 
 //gamemode istype helpers
 #define GAMEMODE_IS_BLOB		(ticker && istype(ticker.mode, /datum/game_mode/blob))
@@ -35,6 +36,7 @@
 #define SPECIAL_ROLE_SHADOWLING "Shadowling"
 #define SPECIAL_ROLE_SHADOWLING_THRALL "Shadowling Thrall"
 #define SPECIAL_ROLE_SLAUGHTER_DEMON "Slaughter Demon"
+#define SPECIAL_ROLE_SUPER "Super"
 #define SPECIAL_ROLE_SYNDICATE_DEATHSQUAD "Syndicate Commando"
 #define SPECIAL_ROLE_TRAITOR "Traitor"
 #define SPECIAL_ROLE_VAMPIRE "Vampire"

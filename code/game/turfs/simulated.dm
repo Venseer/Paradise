@@ -4,7 +4,6 @@
 	var/image/wet_overlay = null
 
 	var/thermite = 0
-	flags = RPD_ALLOWED_HERE
 	oxygen = MOLES_O2STANDARD
 	nitrogen = MOLES_N2STANDARD
 	var/to_be_destroyed = 0 //Used for fire, if a melting temperature was reached, it will be destroyed
@@ -17,9 +16,11 @@
 	levelupdate()
 	visibilityChanged()
 
+/turf/simulated/proc/break_tile()
+
 /turf/simulated/proc/burn_tile()
 
-/turf/simulated/proc/MakeSlippery(wet_setting = TURF_WET_WATER) // 1 = Water, 2 = Lube, 3 = Ice
+/turf/simulated/proc/MakeSlippery(wet_setting = TURF_WET_WATER) // 1 = Water, 2 = Lube, 3 = Ice, 4 = Permafrost
 	if(wet >= wet_setting)
 		return
 	wet = wet_setting
@@ -29,7 +30,10 @@
 			wet_overlay = null
 		var/turf/simulated/floor/F = src
 		if(istype(F))
-			wet_overlay = image('icons/effects/water.dmi', src, "wet_floor_static")
+			if(wet_setting >= TURF_WET_ICE)
+				wet_overlay = image('icons/effects/water.dmi', src, "ice_floor")
+			else
+				wet_overlay = image('icons/effects/water.dmi', src, "wet_floor_static")
 		else
 			wet_overlay = image('icons/effects/water.dmi', src, "wet_static")
 		overlays += wet_overlay
@@ -82,8 +86,11 @@
 					if(!(prob(30) && M.slip("icy floor", 4, 2, tilesSlipped = 1, walkSafely = 1)))
 						M.inertia_dir = 0
 
+				if(TURF_WET_PERMAFROST) // Permafrost
+					M.slip("icy floor", 0, 5, tilesSlipped = 1, walkSafely = 0, slipAny = 1)
+
 /turf/simulated/ChangeTurf(var/path)
 	. = ..()
-	smooth_icon_neighbors(src)
+	queue_smooth_neighbors(src)
 
 /turf/simulated/proc/is_shielded()

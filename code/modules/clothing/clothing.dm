@@ -28,6 +28,7 @@
 	var/toggle_cooldown = null
 	var/cooldown = 0
 	var/species_disguise = null
+	var/magical = FALSE
 
 //BS12: Species-restricted clothing check.
 /obj/item/clothing/mob_can_equip(M as mob, slot)
@@ -49,12 +50,12 @@
 		if("exclude" in species_restricted)
 			exclusive = 1
 
-		if(H.species)
+		if(H.dna.species)
 			if(exclusive)
-				if(!(H.species.name in species_restricted))
+				if(!(H.dna.species.name in species_restricted))
 					wearable = 1
 			else
-				if(H.species.name in species_restricted)
+				if(H.dna.species.name in species_restricted)
 					wearable = 1
 
 			if(!wearable)
@@ -385,18 +386,12 @@ BLIND     // can't see anything
 /obj/item/clothing/shoes/attackby(obj/item/I, mob/user, params)
 	if(istype(I, /obj/item/match) && src.loc == user)
 		var/obj/item/match/M = I
-		if(!M.lit) // Match isn't lit, but isn't burnt.
-			M.lit = 1
-			M.icon_state = "match_lit"
-			processing_objects.Add(M)
-			M.update_icon()
+		if(M.matchignite()) // Match isn't lit, but isn't burnt.
 			user.visible_message("<span class='warning'>[user] strikes a [M] on the bottom of [src], lighting it.</span>","<span class='warning'>You strike the [M] on the bottom of [src] to light it.</span>")
 			playsound(user.loc, 'sound/goonstation/misc/matchstick_light.ogg', 50, 1)
-		else if(M.lit == 1) // Match is lit, not extinguished.
-			M.dropped()
+		else
 			user.visible_message("<span class='warning'>[user] crushes the [M] into the bottom of [src], extinguishing it.</span>","<span class='warning'>You crush the [M] into the bottom of [src], extinguishing it.</span>")
-		else // Match has been previously lit and extinguished.
-			to_chat(user, "<span class='notice'>The [M] has already been extinguished.</span>")
+			M.dropped()
 		return
 
 	if(istype(I, /obj/item/wirecutters))
@@ -417,6 +412,7 @@ BLIND     // can't see anything
 		..()
 
 /obj/item/clothing/shoes/proc/step_action(var/mob/living/carbon/human/H) //squeek squeek
+	SEND_SIGNAL(src, COMSIG_SHOES_STEP_ACTION)
 	if(shoe_sound)
 		var/turf/T = get_turf(H)
 
@@ -504,7 +500,7 @@ BLIND     // can't see anything
 /obj/item/clothing/suit/equipped(var/mob/living/carbon/human/user, var/slot) //Handle tail-hiding on a by-species basis.
 	..()
 	if(ishuman(user) && hide_tail_by_species && slot == slot_wear_suit)
-		if(user.species.name in hide_tail_by_species)
+		if(user.dna.species.name in hide_tail_by_species)
 			if(!(flags_inv & HIDETAIL)) //Hide the tail if the user's species is in the hide_tail_by_species list and the tail isn't already hidden.
 				flags_inv |= HIDETAIL
 		else
@@ -561,6 +557,7 @@ BLIND     // can't see anything
 	strip_delay = 80
 	put_on_delay = 80
 	burn_state = FIRE_PROOF
+	hide_tail_by_species = null
 	species_restricted = list("exclude","Diona","Vox","Wryn")
 
 //Under clothing
@@ -588,6 +585,10 @@ BLIND     // can't see anything
 	var/displays_id = 1
 	var/rolled_down = 0
 	var/basecolor
+
+/obj/item/clothing/under/rank/New()
+	sensor_mode = pick(0,1,2,3)
+	..()
 
 /obj/item/clothing/under/Destroy()
 	QDEL_LIST(accessories)
@@ -692,34 +693,47 @@ BLIND     // can't see anything
 	else
 		to_chat(usr, "<span class='notice'>You cannot roll down the uniform!</span>")
 
-/obj/item/clothing/under/proc/remove_accessory(mob/user, obj/item/clothing/accessory/A)
-	if(!(A in accessories))
-		return
-
-	A.on_removed(user)
-	accessories -= A
-	usr.update_inv_w_uniform()
-
 /obj/item/clothing/under/verb/removetie()
 	set name = "Remove Accessory"
 	set category = "Object"
 	set src in usr
-	if(!istype(usr, /mob/living)) return
-	if(usr.stat) return
-	if(!accessories.len) return
+	handle_accessories_removal()
+
+/obj/item/clothing/under/proc/handle_accessories_removal()
+	if(!isliving(usr))
+		return
+	if(usr.incapacitated())
+		return
+	if(!Adjacent(usr))
+		return
+	if(!accessories.len)
+		return
 	var/obj/item/clothing/accessory/A
 	if(accessories.len > 1)
 		A = input("Select an accessory to remove from [src]") as null|anything in accessories
 	else
 		A = accessories[1]
-	src.remove_accessory(usr,A)
+	remove_accessory(usr,A)
 
-/obj/item/clothing/under/rank/New()
-	sensor_mode = pick(0,1,2,3)
-	..()
+/obj/item/clothing/under/proc/remove_accessory(mob/user, obj/item/clothing/accessory/A)
+	if(!(A in accessories))
+		return
+	if(!isliving(user))
+		return
+	if(user.incapacitated())
+		return
+	if(!Adjacent(user))
+		return
+	A.on_removed(user)
+	accessories -= A
+	to_chat(user, "<span class='notice'>You remove [A] from [src].</span>")
+	usr.update_inv_w_uniform()
 
 /obj/item/clothing/under/emp_act(severity)
 	if(accessories.len)
 		for(var/obj/item/clothing/accessory/A in accessories)
 			A.emp_act(severity)
 	..()
+
+/obj/item/clothing/under/AltClick()
+	handle_accessories_removal()

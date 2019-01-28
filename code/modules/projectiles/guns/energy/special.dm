@@ -1,3 +1,4 @@
+// Ion Rifles //
 /obj/item/gun/energy/ionrifle
 	name = "ion rifle"
 	desc = "A man portable anti-armor weapon designed to disable mechanical threats"
@@ -29,6 +30,7 @@
 	flight_x_offset = 18
 	flight_y_offset = 11
 
+// Decloner //
 /obj/item/gun/energy/decloner
 	name = "biological demolecularisor"
 	desc = "A gun that discharges high amounts of controlled radiation to slowly break a target into component elements."
@@ -44,6 +46,7 @@
 	if(power_supply.charge > shot.e_cost)
 		overlays += "decloner_spin"
 
+// Flora Gun //
 /obj/item/gun/energy/floragun
 	name = "floral somatoray"
 	desc = "A tool that discharges controlled radiation which induces mutation in plant cells."
@@ -56,12 +59,14 @@
 	ammo_x_offset = 1
 	selfcharge = 1
 
+// Meteor Gun //
 /obj/item/gun/energy/meteorgun
 	name = "meteor gun"
 	desc = "For the love of god, make sure you're aiming this the right way!"
 	icon = 'icons/obj/guns/projectile.dmi'
 	icon_state = "riotgun"
 	item_state = "c20r"
+	fire_sound = 'sound/weapons/gunshots/gunshot_shotgun.ogg'
 	w_class = WEIGHT_CLASS_BULKY
 	ammo_type = list(/obj/item/ammo_casing/energy/meteor)
 	cell_type = /obj/item/stock_parts/cell/potato
@@ -78,6 +83,7 @@
 	righthand_file = 'icons/mob/inhands/items_righthand.dmi'
 	w_class = WEIGHT_CLASS_TINY
 
+// Mind Flayer //
 /obj/item/gun/energy/mindflayer
 	name = "\improper Mind Flayer"
 	desc = "A prototype weapon recovered from the ruins of Research-Station Epsilon."
@@ -86,6 +92,7 @@
 	ammo_type = list(/obj/item/ammo_casing/energy/mindflayer)
 	ammo_x_offset = 2
 
+// Energy Crossbows //
 /obj/item/gun/energy/kinetic_accelerator/crossbow
 	name = "mini energy crossbow"
 	desc = "A weapon favored by syndicate stealth specialists."
@@ -132,6 +139,7 @@
 	shoot_live_shot()
 	return (OXYLOSS)
 
+// Plasma Cutters //
 /obj/item/gun/energy/plasmacutter
 	name = "plasma cutter"
 	desc = "A mining tool capable of expelling concentrated plasma bursts. You could use it to cut limbs off of xenos! Or, you know, mine stuff."
@@ -140,10 +148,11 @@
 	modifystate = -1
 	origin_tech = "combat=1;materials=3;magnets=2;plasmatech=3;engineering=1"
 	ammo_type = list(/obj/item/ammo_casing/energy/plasma)
-	fire_sound = 'sound/weapons/laser.ogg'
+	fire_sound = 'sound/weapons/Laser.ogg'
 	usesound = 'sound/items/Welder.ogg'
 	toolspeed = 1
-	flags = CONDUCT | OPENCONTAINER
+	container_type = OPENCONTAINER
+	flags = CONDUCT
 	attack_verb = list("attacked", "slashed", "cut", "sliced")
 	force = 12
 	sharp = 1
@@ -160,8 +169,9 @@
 		S.use(1)
 		power_supply.give(1000)
 		to_chat(user, "<span class='notice'>You insert [A] in [src], recharging it.</span>")
-	else if(istype(A, /obj/item/ore/plasma))
-		qdel(A)
+	else if(istype(A, /obj/item/stack/ore/plasma))
+		var/obj/item/stack/ore/S = A
+		S.use(1)
 		power_supply.give(500)
 		to_chat(user, "<span class='notice'>You insert [A] in [src], recharging it.</span>")
 	else
@@ -178,6 +188,7 @@
 	ammo_type = list(/obj/item/ammo_casing/energy/plasma/adv)
 	force = 15
 
+// Wormhole Projectors //
 /obj/item/gun/energy/wormhole_projector
 	name = "bluespace wormhole projector"
 	desc = "A projector that emits high density quantum-coupled bluespace beams."
@@ -196,9 +207,9 @@
 
 /obj/item/gun/energy/wormhole_projector/process_chamber()
 	..()
-	select_fire()
+	select_fire(usr)
 
-/obj/item/gun/energy/wormhole_projector/proc/portal_destroyed(obj/effect/portal/P)
+/obj/item/gun/energy/wormhole_projector/portal_destroyed(obj/effect/portal/P)
 	if(P.icon_state == "portal")
 		blue = null
 		if(orange)
@@ -225,7 +236,6 @@
 		orange.target = get_turf(blue)
 
 /* 3d printer 'pseudo guns' for borgs */
-
 /obj/item/gun/energy/printer
 	name = "cyborg lmg"
 	desc = "A machinegun that fires 3d-printed flachettes slowly regenerated using a cyborg's internal power source."
@@ -245,6 +255,7 @@
 	..()
 	robocharge()
 
+// Instakill Lasers //
 /obj/item/gun/energy/laser/instakill
 	name = "instakill rifle"
 	icon_state = "instagib"
@@ -269,6 +280,7 @@
 	item_state = "instagibblue"
 	ammo_type = list(/obj/item/ammo_casing/energy/instakill/blue)
 
+// HONK Rifle //
 /obj/item/gun/energy/clown
 	name = "HONK Rifle"
 	desc = "Clown Planet's finest."
@@ -289,6 +301,7 @@
 	ammo_type = list(/obj/item/ammo_casing/energy/toxplasma)
 	shaded_charge = 1
 
+// Energy Sniper //
 /obj/item/gun/energy/sniperrifle
 	name = "L.W.A.P. Sniper Rifle"
 	desc = "A rifle constructed of lightweight materials, fitted with a SMART aiming-system scope."
@@ -301,6 +314,7 @@
 	zoom_amt = 7 //Long range, enough to see in front of you, but no tiles behind you.
 	shaded_charge = 1
 
+// Temperature Gun //
 /obj/item/gun/energy/temperature
 	name = "temperature gun"
 	icon = 'icons/obj/guns/gun_temperature.dmi'
@@ -484,6 +498,7 @@
 		if(100 to 202)			overlays += "100"
 		if(-INFINITY to 100)	overlays += "0"
 
+// Mimic Gun //
 /obj/item/gun/energy/mimicgun
 	name = "mimic gun"
 	desc = "A self-defense weapon that exhausts organic targets, weakening them until they collapse. Why does this one have teeth?"

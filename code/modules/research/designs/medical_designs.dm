@@ -1,15 +1,6 @@
 /////////////////////////////////////////
 ////////////Medical Tools////////////////
 /////////////////////////////////////////
-/datum/design/adv_mass_spectrometer
-	name = "Advanced Mass-Spectrometer"
-	desc = "A device for analyzing chemicals in the blood and their quantities."
-	id = "adv_mass_spectrometer"
-	req_tech = list("biotech" = 3, "magnets" = 4, "plasmatech" = 3)
-	build_type = PROTOLATHE
-	materials = list(MAT_METAL = 500, MAT_GLASS = 200)
-	build_path = "/obj/item/mass_spectrometer/adv"
-	category = list("Medical")
 
 /datum/design/adv_reagent_scanner
 	name = "Advanced Reagent Scanner"
@@ -92,16 +83,6 @@
 	construction_time = 75
 	build_path = /obj/item/mmi
 	category = list("Misc","Medical")
-
-/datum/design/mass_spectrometer
-	name = "Mass-Spectrometer"
-	desc = "A device for analyzing chemicals in the blood."
-	id = "mass_spectrometer"
-	req_tech = list("magnets" = 2, "plasmatech" = 2)
-	build_type = PROTOLATHE
-	materials = list(MAT_METAL = 300, MAT_GLASS = 100)
-	build_path = /obj/item/mass_spectrometer
-	category = list("Medical")
 
 /datum/design/robotic_brain
 	name = "Robotic Brain"
@@ -245,6 +226,36 @@
 	materials = list(MAT_METAL = 2000, MAT_SILVER = 1500, MAT_PLASMA = 500, MAT_TITANIUM = 1500)
 	category = list("Medical")
 
+/datum/design/alienbonegel
+	name = "Alien Bone Gel"
+	desc = "Advanced bone gel obtained through Abductor technology."
+	id = "alien_bonegel"
+	req_tech = list("biotech" = 4, "materials" = 4, "abductor" = 3)
+	build_path = /obj/item/bonegel/alien
+	build_type = PROTOLATHE
+	materials = list(MAT_METAL = 2000, MAT_SILVER = 1500, MAT_PLASMA = 500, MAT_TITANIUM = 1500)
+	category = list("Medical")
+
+/datum/design/alienbonesetter
+	name = "Alien Bone Setter"
+	desc = "An advanced bone setter obtained through Abductor technology."
+	id = "alien_bonesetter"
+	req_tech = list("biotech" = 4, "materials" = 4, "abductor" = 3)
+	build_path = /obj/item/bonesetter/alien
+	build_type = PROTOLATHE
+	materials = list(MAT_METAL = 2000, MAT_SILVER = 1500, MAT_PLASMA = 500, MAT_TITANIUM = 1500)
+	category = list("Medical")
+
+/datum/design/alienfixovein
+	name = "Alien FixOVein"
+	desc = "An advanced FixOVein obtained through Abductor technology."
+	id = "alien_fixovein"
+	req_tech = list("biotech" = 4, "materials" = 4, "abductor" = 3)
+	build_path = /obj/item/FixOVein/alien
+	build_type = PROTOLATHE
+	materials = list(MAT_METAL = 2000, MAT_SILVER = 1500, MAT_PLASMA = 500, MAT_TITANIUM = 1500)
+	category = list("Medical")
+
 /////////////////////////////////////////
 //////////Cybernetic Implants////////////
 /////////////////////////////////////////
@@ -293,6 +304,17 @@
 	build_path = /obj/item/organ/internal/cyberimp/arm/toolset
 	category = list("Misc", "Medical")
 
+/datum/design/cyberimp_diagnostic_hud
+	name = "Diagnostic HUD implant"
+	desc = "These cybernetic eye implants will display a diagnostic HUD over everything you see. Wiggle eyes to control."
+	id = "ci-diaghud"
+	req_tech = list("materials" = 5, "engineering" = 4, "programming" = 4, "biotech" = 4)
+	build_type = PROTOLATHE | MECHFAB
+	construction_time = 50
+	materials = list(MAT_METAL = 600, MAT_GLASS = 600, MAT_SILVER = 500, MAT_GOLD = 500)
+	build_path = /obj/item/organ/internal/cyberimp/eyes/hud/diagnostic
+	category = list("Misc", "Medical")
+
 /datum/design/cyberimp_medical_hud
 	name = "Medical HUD implant"
 	desc = "These cybernetic eyes will display a medical HUD over everything you see. Wiggle eyes to control."
@@ -313,6 +335,17 @@
 	construction_time = 50
 	materials = list(MAT_METAL = 600, MAT_GLASS = 600, MAT_SILVER = 750, MAT_GOLD = 750)
 	build_path = /obj/item/organ/internal/cyberimp/eyes/hud/security
+	category = list("Misc", "Medical")
+
+/datum/design/cyberimp_meson
+	name = "Meson scanner implant"
+	desc = "These cybernetic eyes will allow you to see the structural layout of the station, and, well, everything else."
+	id = "ci-mesonhud"
+	req_tech = list("materials" = 4, "biotech" = 4, "engineering" = 4)
+	build_type = PROTOLATHE | MECHFAB
+	construction_time = 50
+	materials = list(MAT_METAL = 500, MAT_GLASS = 500, MAT_SILVER = 500, MAT_GOLD = 300)
+	build_path = /obj/item/organ/internal/cyberimp/eyes/meson
 	category = list("Misc", "Medical")
 
 /datum/design/cyberimp_xray

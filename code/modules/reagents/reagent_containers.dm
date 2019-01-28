@@ -10,6 +10,7 @@
 	var/list/list_reagents = null
 	var/spawned_disease = null
 	var/disease_amount = 20
+	var/has_lid = FALSE // Used for containers where we want to put lids on and off
 
 /obj/item/reagent_containers/verb/set_APTFT() //set amount_per_transfer_from_this
 	set name = "Set transfer amount"
@@ -49,6 +50,14 @@
 	..()
 
 /obj/item/reagent_containers/attack_self(mob/user)
+	if(has_lid)
+		if(is_open_container())
+			to_chat(usr, "<span class='notice'>You put the lid on [src].</span>")
+			container_type ^= REFILLABLE | DRAINABLE
+		else
+			to_chat(usr, "<span class='notice'>You take the lid off [src].</span>")
+			container_type |= REFILLABLE | DRAINABLE
+		update_icon()
 	return
 
 // this prevented pills, food, and other things from being picked up by bags.
@@ -60,14 +69,6 @@
 */
 /obj/item/reagent_containers/afterattack(obj/target, mob/user , flag)
 	return
-
-/obj/item/reagent_containers/proc/reagentlist() //Return reagents in a reagent_container, default to source
-	var/data
-	if(reagents && reagents.reagent_list && reagents.reagent_list.len) //find a reagent list if there is and check if it has entries
-		for(var/datum/reagent/R in reagents.reagent_list) //no reagents will be left behind
-			data += "[R.id]([R.volume] units); " //Using IDs because SOME chemicals(I'm looking at you, chlorhydrate-beer) have the same names as other chemicals.
-		return data
-	else return "No reagents"
 
 /obj/item/reagent_containers/wash(mob/user, atom/source)
 	if(is_open_container())

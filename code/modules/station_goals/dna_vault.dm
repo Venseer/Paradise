@@ -3,11 +3,6 @@
 // DNA vault requires x animals ,y plants, z human dna
 // DNA vaults require high tier stock parts and cold
 // After completion each crewmember can receive single upgrade chosen out of 2 for the mob.
-#define VAULT_SPACEIMMUNE "Space Immunity"
-#define VAULT_XRAY "X-Ray Vision"
-#define VAULT_TELEKINESIS "Telekinesis"
-#define VAULT_PSYCHIC "Psychic Powers"
-#define VAULT_SPEED "Speediness"
 
 /datum/station_goal/dna_vault
 	name = "DNA Vault"
@@ -17,7 +12,7 @@
 
 /datum/station_goal/dna_vault/New()
 	..()
-	animal_count = rand(15,20) //might be too few given ~15 roundstart stationside ones
+	animal_count = rand(15, 20) //might be too few given ~15 roundstart stationside ones
 	human_count = rand(round(0.75 * ticker.mode.num_players_started()), ticker.mode.num_players_started()) // 75%+ roundstart population.
 	var/non_standard_plants = non_standard_plants_count()
 	plant_count = rand(round(0.5 * non_standard_plants),round(0.7 * non_standard_plants))
@@ -42,16 +37,16 @@
 	The base vault parts should be available for shipping by your cargo shuttle."}
 
 /datum/station_goal/dna_vault/on_report()
-	var/datum/supply_packs/P = shuttle_master.supply_packs["[/datum/supply_packs/misc/dna_vault]"]
+	var/datum/supply_packs/P = SSshuttle.supply_packs["[/datum/supply_packs/misc/dna_vault]"]
 	P.special_enabled = TRUE
 
-	P = shuttle_master.supply_packs["[/datum/supply_packs/misc/dna_probes]"]
+	P = SSshuttle.supply_packs["[/datum/supply_packs/misc/dna_probes]"]
 	P.special_enabled = TRUE
 
 /datum/station_goal/dna_vault/check_completion()
 	if(..())
 		return TRUE
-	for(var/obj/machinery/dna_vault/V in machines)
+	for(var/obj/machinery/dna_vault/V in GLOB.machines)
 		if(V.animals.len >= animal_count && V.plants.len >= plant_count && V.dna.len >= human_count && is_station_contact(V.z))
 			return TRUE
 	return FALSE
@@ -60,8 +55,8 @@
 	name = "DNA Sampler"
 	desc = "Can be used to take chemical and genetic samples of pretty much anything."
 	icon = 'icons/obj/hypo.dmi'
-	item_state = "hypo"
-	icon_state = "hypo"
+	item_state = "sampler_hypo"
+	icon_state = "sampler_hypo"
 	flags = NOBLUDGEON
 	var/list/animals = list()
 	var/list/plants = list()
@@ -87,10 +82,10 @@ var/list/non_simple_animals = typecacheof(list(/mob/living/carbon/human/monkey,/
 			to_chat(user, "<span clas='warning'>Plants needs to be ready to harvest to perform full data scan.</span>") //Because space dna is actually magic
 			return
 		if(plants[H.myseed.type])
-			to_chat(user, "<span class='notice'>Plant data already present in local storage.<span>")
+			to_chat(user, "<span class='notice'>Plant data already present in local storage.</span>")
 			return
 		plants[H.myseed.type] = 1
-		to_chat(user, "<span class='notice'>Plant data added to local storage.<span>")
+		to_chat(user, "<span class='notice'>Plant data added to local storage.</span>")
 
 	//animals
 	if(isanimal(target) || is_type_in_typecache(target, non_simple_animals))
@@ -100,19 +95,19 @@ var/list/non_simple_animals = typecacheof(list(/mob/living/carbon/human/monkey,/
 				to_chat(user, "<span class='warning'>No compatible DNA detected</span>")
 				return
 		if(animals[target.type])
-			to_chat(user, "<span class='notice'>Animal data already present in local storage.<span>")
+			to_chat(user, "<span class='notice'>Animal data already present in local storage.</span>")
 			return
 		animals[target.type] = 1
-		to_chat(user, "<span class='notice'>Animal data added to local storage.<span>")
+		to_chat(user, "<span class='notice'>Animal data added to local storage.</span>")
 
 	//humans
 	if(ishuman(target))
 		var/mob/living/carbon/human/H = target
 		if(dna[H.dna.uni_identity])
-			to_chat(user, "<span class='notice'>Humanoid data already present in local storage.<span>")
+			to_chat(user, "<span class='notice'>Humanoid data already present in local storage.</span>")
 			return
 		dna[H.dna.uni_identity] = 1
-		to_chat(user, "<span class='notice'>Humanoid data added to local storage.<span>")
+		to_chat(user, "<span class='notice'>Humanoid data added to local storage.</span>")
 
 
 /obj/item/circuitboard/machine/dna_vault
@@ -302,3 +297,4 @@ var/list/non_simple_animals = typecacheof(list(/mob/living/carbon/human/monkey,/
 	H.dna.SetSEState(block, 1, 1)
 	H.mutations |= power
 	genemutcheck(H, block, null, MUTCHK_FORCED)
+	H.dna.default_blocks.Add(block) //prevent removal by mutadone

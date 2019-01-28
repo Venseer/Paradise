@@ -129,8 +129,49 @@
 #define TINT_BLIND 3			//Threshold of tint level to obscure vision fully
 #define EYE_SHINE_THRESHOLD 6	//dark_view threshold past which a humanoid's eyes will 'shine' in the dark.
 
+#define EMOTE_VISUAL 1  //A mob emote is visual
+#define EMOTE_SOUND 2  //A mob emote is sound
+
+#define STATUS_UPDATE_HEALTH 1
+#define STATUS_UPDATE_STAT 2
+#define STATUS_UPDATE_CANMOVE 4
+#define STATUS_UPDATE_STAMINA 8
+#define STATUS_UPDATE_BLIND 16
+#define STATUS_UPDATE_BLURRY 32
+#define STATUS_UPDATE_NEARSIGHTED 64
+#define STATUS_UPDATE_DRUGGY 128
+
+#define STATUS_UPDATE_NONE 0
+#define STATUS_UPDATE_ALL (~0)
+#define INVISIBILITY_ABSTRACT 101
+#define UNHEALING_EAR_DAMAGE 100
+
 //Human sub-species
-#define isabductor(A) (is_species(A, "Abductor"))
+#define isshadowling(A) (is_species(A, /datum/species/shadow/ling))
+#define isshadowlinglesser(A) (is_species(A, /datum/species/shadow/ling/lesser))
+#define isabductor(A) (is_species(A, /datum/species/abductor))
+#define isgolem(A) (is_species(A, /datum/species/golem))
+#define ismonkeybasic(A) (is_species(A, /datum/species/monkey))
+#define isfarwa(A) (is_species(A, /datum/species/monkey/tajaran))
+#define iswolpin(A) (is_species(A, /datum/species/monkey/vulpkanin))
+#define isneara(A) (is_species(A, /datum/species/monkey/skrell))
+#define isstok(A) (is_species(A, /datum/species/monkey/unathi))
+#define isplasmaman(A) (is_species(A, /datum/species/plasmaman))
+#define isshadowperson(A) (is_species(A, /datum/species/shadow))
+#define isskeleton(A) (is_species(A, /datum/species/skeleton))
+#define ishumanbasic(A) (is_species(A, /datum/species/human))
+#define isunathi(A) (is_species(A, /datum/species/unathi))
+#define istajaran(A) (is_species(A, /datum/species/tajaran))
+#define isvulpkanin(A) (is_species(A, /datum/species/vulpkanin))
+#define isskrell(A) (is_species(A, /datum/species/skrell))
+#define isvox(A) (is_species(A, /datum/species/vox))
+#define isvoxarmalis(A) (is_species(A, /datum/species/vox/armalis))
+#define iskidan(A) (is_species(A, /datum/species/kidan))
+#define isslimeperson(A) (is_species(A, /datum/species/slime))
+#define isgrey(A) (is_species(A, /datum/species/grey))
+#define isdiona(A) (is_species(A, /datum/species/diona))
+#define ismachine(A) (is_species(A, /datum/species/machine))
+#define isdrask(A) (is_species(A, /datum/species/drask))
 
 #define isanimal(A)		(istype((A), /mob/living/simple_animal))
 #define iscorgi(A)		(istype((A), /mob/living/simple_animal/pet/corgi))
@@ -138,8 +179,7 @@
 #define isbot(A)		(istype((A), /mob/living/simple_animal/bot))
 #define isswarmer(A)	(istype((A), /mob/living/simple_animal/hostile/swarmer))
 #define isguardian(A)	(istype((A), /mob/living/simple_animal/hostile/guardian))
-
-
+#define isnymph(A)      (istype((A), /mob/living/simple_animal/diona))
 
 #define issilicon(A)	(istype((A), /mob/living/silicon))
 #define isAI(A)			(istype((A), /mob/living/silicon/ai))

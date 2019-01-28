@@ -15,7 +15,7 @@
 //Controls how much power is produced by each collector in range - this is the main parameter for tweaking SM balance, as it basically controls how the power variable relates to the rest of the game.
 #define POWER_FACTOR 1.0
 #define DECAY_FACTOR 700			//Affects how fast the supermatter power decays
-#define CRITICAL_TEMPERATURE 5000	//K
+#define CRITICAL_TEMPERATURE 10000	//K
 #define CHARGING_FACTOR 0.05
 #define DAMAGE_RATE_LIMIT 4.5		//damage rate cap at power = 300, scales linearly with power
 
@@ -99,7 +99,7 @@
 
 /obj/machinery/power/supermatter_shard/New()
 	. = ..()
-	poi_list |= src
+	GLOB.poi_list |= src
 	//Added to the atmos_machine process as the SM is highly coupled with the atmospherics system.
 	//Having the SM run at a different rate then atmospherics causes odd behavior.
 	SSair.atmos_machinery += src
@@ -137,7 +137,7 @@
 	if(damage > emergency_point)
 		emergency_lighting(0)
 	QDEL_NULL(radio)
-	poi_list.Remove(src)
+	GLOB.poi_list.Remove(src)
 	SSair.atmos_machinery -= src
 	return ..()
 
@@ -182,7 +182,7 @@
 		if(damage > explosion_point)
 			if(get_turf(src))
 				var/turf/position = get_turf(src)
-				for(var/mob/living/mob in living_mob_list)
+				for(var/mob/living/mob in GLOB.living_mob_list)
 					var/turf/mob_pos = get_turf(mob)
 					if(mob_pos && mob_pos.z == position.z)
 						if(ishuman(mob))
@@ -301,7 +301,7 @@
 	investigate_log("Supermatter shard consumed by singularity.","singulo")
 	message_admins("Singularity has consumed a supermatter shard and can now become stage six.<A HREF='?_src_=holder;adminplayerobservecoodjump=1;X=[x];Y=[y];Z=[z]'>(JMP)</a>.")
 	visible_message("<span class='userdanger'>[src] is consumed by the singularity!</span>")
-	for(var/mob/M in mob_list)
+	for(var/mob/M in GLOB.mob_list)
 		M << 'sound/effects/supermatter.ogg' //everyone gunna know bout this
 		to_chat(M, "<span class='boldannounce'>A horrible screeching fills your ears, and a wave of dread washes over you...</span>")
 	qdel(src)
@@ -424,8 +424,6 @@
 				"<span class='danger'>The unearthly ringing subsides and you notice you have new radiation burns.</span>", 2)
 		else
 			L.show_message("<span class='italics'>You hear an uneartly ringing and notice your skin is covered in fresh radiation burns.</span>", 2)
-
-#define CRITICAL_TEMPERATURE 10000
 
 /obj/machinery/power/supermatter_shard/proc/get_status()
 	var/turf/T = get_turf(src)

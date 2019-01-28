@@ -19,7 +19,7 @@
 	var/checking = FALSE
 	var/TC_cost = 0
 	var/borg_to_spawn
-	var/list/possible_types = list("Assault", "Medical")
+	var/list/possible_types = list("Assault", "Medical", "Saboteur")
 
 /obj/item/antag_spawner/borg_tele/attack_self(mob/user)
 	if(used)
@@ -43,22 +43,23 @@
 		var/mob/M = pick(borg_candidates)
 		var/client/C = M.client
 		spawn_antag(C, get_turf(src.loc), "syndieborg")
+		qdel(src)
 	else
 		checking = FALSE
-		to_chat(user, "<span class='notice'>Unable to connect to Syndicate command. Please wait and try again later or use the teleporter on your uplink to get your points refunded.</span>")
+		to_chat(user, "<span class='notice'>Unable to connect to Syndicate command. Please wait and try again later or refund your teleporter through your uplink.</span>")
 		return
 
 /obj/item/antag_spawner/borg_tele/spawn_antag(client/C, turf/T, type = "")
 	if(!borg_to_spawn) //If there's no type at all, let it still be used but don't do anything
 		used = FALSE
 		return
-	var/datum/effect_system/spark_spread/S = new /datum/effect_system/spark_spread
-	S.set_up(4, 1, src)
-	S.start()
+	do_sparks(4, 1, src)
 	var/mob/living/silicon/robot/R
 	switch(borg_to_spawn)
 		if("Medical")
 			R = new /mob/living/silicon/robot/syndicate/medical(T)
+		if("Saboteur")
+			R = new /mob/living/silicon/robot/syndicate/saboteur(T)
 		else
 			R = new /mob/living/silicon/robot/syndicate(T) //Assault borg by default
 	R.key = C.key

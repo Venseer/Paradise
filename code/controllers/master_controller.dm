@@ -46,17 +46,15 @@ var/global/pipe_processing_killed = 0
 		seedRuins(level_name_to_num(EMPTY_AREA), rand(0, 3), /area/space, space_ruins_templates)
 		log_startup_progress("Loaded random space levels in [stop_watch(timer)]s.")
 
-		// We'll keep this around for the time when we finally expunge all
-		// code that checks on hard-defined z positions
+		// load in extra levels of space ruins
 
-		// var/num_extra_space = 6
-		// for(var/i = 1, i <= num_extra_space, i++)
-		// 	var/zlev = space_manager.add_new_zlevel("[EMPTY_AREA] #[i]", linkage = CROSSLINKED)
-		// 	seedRuins(zlev, rand(0, 3), /area/space, space_ruins_templates)
+		var/num_extra_space = rand(config.extra_space_ruin_levels_min, config.extra_space_ruin_levels_max)
+		for(var/i = 1, i <= num_extra_space, i++)
+			var/zlev = space_manager.add_new_zlevel("[EMPTY_AREA] #[i]", linkage = CROSSLINKED)
+			seedRuins(zlev, rand(0, 3), /area/space, space_ruins_templates)
 
 	space_manager.do_transition_setup()
 
-	setup_asset_cache()
 	setupfactions()
 	setup_economy()
 
@@ -64,9 +62,3 @@ var/global/pipe_processing_killed = 0
 		make_mining_asteroid_secret()
 
 	populate_spawn_points()
-
-/datum/controller/game_controller/proc/setup_asset_cache()
-	var/watch = start_watch()
-	log_startup_progress("Populating asset cache...")
-	populate_asset_cache()
-	log_startup_progress("	Populated [asset_cache.len] assets in [stop_watch(watch)]s.")

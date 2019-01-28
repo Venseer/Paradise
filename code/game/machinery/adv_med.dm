@@ -307,6 +307,7 @@
 		else
 			setDir(EAST)
 		playsound(loc, I.usesound, 50, 1)
+		return
 
 	if(exchange_parts(user, I))
 		return
@@ -387,7 +388,7 @@
 
 		var/bloodData[0]
 		bloodData["hasBlood"] = 0
-		if(ishuman(H) && !(NO_BLOOD in H.species.species_traits))
+		if(ishuman(H) && !(NO_BLOOD in H.dna.species.species_traits))
 			bloodData["hasBlood"] = 1
 			bloodData["volume"] = H.blood_volume
 			bloodData["percent"] = round(((H.blood_volume / BLOOD_VOLUME_NORMAL)*100))

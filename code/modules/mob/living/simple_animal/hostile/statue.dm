@@ -42,7 +42,9 @@
 
 	see_invisible = SEE_INVISIBLE_OBSERVER_NOLIGHTING
 	sight = SEE_SELF|SEE_MOBS|SEE_OBJS|SEE_TURFS
-	anchored = 1
+	move_force = MOVE_FORCE_EXTREMELY_STRONG
+	move_resist = MOVE_FORCE_EXTREMELY_STRONG
+	pull_force = MOVE_FORCE_EXTREMELY_STRONG
 	status_flags = GODMODE // Cannot push also
 
 	var/cannot_be_seen = 1
@@ -179,13 +181,20 @@
 	range = 10
 
 /obj/effect/proc_holder/spell/aoe_turf/blindness/cast(list/targets, mob/user = usr)
-	for(var/mob/living/L in living_mob_list)
+	for(var/mob/living/L in GLOB.living_mob_list)
 		if(L == user)
 			continue
 		var/turf/T = get_turf(L.loc)
 		if(T && T in targets)
 			L.EyeBlind(4)
 	return
+
+/mob/living/simple_animal/hostile/statue/update_sight()
+	if(!client)
+		return
+	if(stat == DEAD)
+		grant_death_vision()
+		return
 
 //Toggle Night Vision
 /obj/effect/proc_holder/spell/targeted/night_vision

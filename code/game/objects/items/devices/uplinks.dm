@@ -12,7 +12,7 @@ var/list/world_uplinks = list()
 	var/welcome 			// Welcoming menu message
 	var/uses 				// Numbers of crystals
 	var/hidden_crystals = 0
-	var/list/ItemsCategory	// List of categories with lists of items
+	var/list/uplink_items	// List of categories with lists of items
 	var/list/ItemsReference	// List of references with an associated item
 	var/list/nanoui_items	// List of items for NanoUI use
 	var/nanoui_menu = 0		// The current menu we are in
@@ -24,6 +24,8 @@ var/list/world_uplinks = list()
 
 	var/job = null
 	var/show_descriptions = 0
+	var/temp_category
+	var/uplink_type = "traitor"
 
 /obj/item/uplink/nano_host()
 	return loc
@@ -32,7 +34,7 @@ var/list/world_uplinks = list()
 	..()
 	welcome = ticker.mode.uplink_welcome
 	uses = ticker.mode.uplink_uses
-	ItemsCategory = get_uplink_items()
+	uplink_items = get_uplink_items()
 
 	world_uplinks += src
 
@@ -57,14 +59,14 @@ var/list/world_uplinks = list()
 	dat += "<I>Each item costs a number of telecrystals as indicated by the number following its name.</I><br>"
 
 	var/category_items = 1
-	for(var/category in ItemsCategory)
+	for(var/category in uplink_items)
 		if(category_items < 1)
 			dat += "<i>We apologize, as you could not afford anything from this category.</i><br>"
 		dat += "<br>"
 		dat += "<b>[category]</b><br>"
 		category_items = 0
 
-		for(var/datum/uplink_item/I in ItemsCategory[category])
+		for(var/datum/uplink_item/I in uplink_items[category])
 			if(I.cost > uses)
 				continue
 			if(I.job && I.job.len)
@@ -87,9 +89,9 @@ var/list/world_uplinks = list()
 	var/list/nano = new
 	var/list/reference = new
 
-	for(var/category in ItemsCategory)
+	for(var/category in uplink_items)
 		nano[++nano.len] = list("Category" = category, "items" = list())
-		for(var/datum/uplink_item/I in ItemsCategory[category])
+		for(var/datum/uplink_item/I in uplink_items[category])
 			if(I.job && I.job.len)
 				if(!(I.job.Find(job)))
 					continue
@@ -109,13 +111,16 @@ var/list/world_uplinks = list()
 	var/list/random_items = new
 	for(var/IR in ItemsReference)
 		var/datum/uplink_item/UI = ItemsReference[IR]
-		if(UI.cost <= uses)
+		if(UI.cost <= uses && UI.limited_stock != 0)
 			random_items += UI
 	return pick(random_items)
 
 /obj/item/uplink/Topic(href, href_list)
 	if(..())
 		return 1
+
+	if(href_list["refund"])
+		refund(usr)
 
 	if(href_list["buy_item"] == "random")
 		var/datum/uplink_item/UI = chooseRandomItem()
@@ -129,7 +134,12 @@ var/list/world_uplinks = list()
 /obj/item/uplink/proc/buy(var/datum/uplink_item/UI, var/reference)
 	if(!UI)
 		return
+	if(UI.limited_stock == 0)
+		to_chat(usr, "<span class='warning'>You have redeemed this discount already.</span>")
+		return
 	UI.buy(src,usr)
+	if(UI.limited_stock > 0) // only decrement it if it's actually limited
+		UI.limited_stock--
 	SSnanoui.update_uis(src)
 
 	/* var/list/L = UI.spawn_item(get_turf(usr),src)
@@ -141,6 +151,22 @@ var/list/world_uplinks = list()
 	purchase_log[UI] = purchase_log[UI] + 1 */
 
 	return 1
+
+/obj/item/uplink/proc/refund(mob/user as mob)
+	var/obj/item/I = user.get_active_hand()
+	if(I) // Make sure there's actually something in the hand before even bothering to check
+		for(var/category in uplink_items)
+			for(var/item in uplink_items[category])
+				var/datum/uplink_item/UI = item
+				var/path = UI.refund_path || UI.item
+				var/cost = UI.refund_amount || UI.cost
+				if(I.type == path && UI.refundable && I.check_uplink_validity())
+					uses += cost
+					used_TC -= cost
+					to_chat(user, "<span class='notice'>[I] refunded.</span>")
+					qdel(I)
+					return
+		..()
 
 // HIDDEN UPLINK - Can be stored in anything but the host item has to have a trigger for it.
 /* How to create an uplink in 3 easy steps!
@@ -209,6 +235,7 @@ var/list/world_uplinks = list()
 	if(!nanoui_items)
 		generate_items(user)
 	data["nano_items"] = nanoui_items
+	data["category_choice"] = temp_category
 	data += nanoui_data
 
 	return data
@@ -236,9 +263,6 @@ var/list/world_uplinks = list()
 			hidden_crystals = 0
 			ui.close()
 			return 1
-		if(href_list["return"])
-			nanoui_menu = round(nanoui_menu/10)
-			update_nano_data()
 		if(href_list["menu"])
 			nanoui_menu = text2num(href_list["menu"])
 			update_nano_data(href_list["id"])
@@ -247,6 +271,9 @@ var/list/world_uplinks = list()
 			update_nano_data(href_list["id"])
 		if(href_list["descriptions"])
 			show_descriptions = !show_descriptions
+			update_nano_data()
+		if(href_list["category"])
+			temp_category = href_list["category"]
 			update_nano_data()
 
 	SSnanoui.update_uis(src)
@@ -287,17 +314,6 @@ var/list/world_uplinks = list()
 			return 1
 	return 0
 
-//Refund proc for the borg teleporter (later I'll make a general refund proc if there is demand for it)
-/obj/item/radio/uplink/attackby(obj/item/W as obj, mob/user as mob, params)
-	if(istype(W, /obj/item/antag_spawner/borg_tele))
-		var/obj/item/antag_spawner/borg_tele/S = W
-		if(!S.used && !S.checking)
-			hidden_uplink.uses += S.TC_cost
-			qdel(S)
-			to_chat(user, "<span class='notice'>Teleporter refunded.</span>")
-		else
-			to_chat(user, "<span class='notice'>This teleporter is already used, or is currently being used.</span>")
-
 // PRESET UPLINKS
 // A collection of preset uplinks.
 //
@@ -311,6 +327,21 @@ var/list/world_uplinks = list()
 /obj/item/radio/uplink/attack_self(mob/user as mob)
 	if(hidden_uplink)
 		hidden_uplink.trigger(user)
+
+/obj/item/radio/uplink/nuclear/New()
+	..()
+	if(hidden_uplink)
+		hidden_uplink.uplink_type = "nuclear"
+	GLOB.nuclear_uplink_list += src
+
+/obj/item/radio/uplink/nuclear/Destroy()
+	GLOB.nuclear_uplink_list -= src
+	return ..()
+
+/obj/item/radio/uplink/sst/New()
+	..()
+	if(hidden_uplink)
+		hidden_uplink.uplink_type = "sst"
 
 /obj/item/multitool/uplink/New()
 	hidden_uplink = new(src)

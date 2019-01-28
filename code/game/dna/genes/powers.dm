@@ -39,7 +39,7 @@
 		return 0
 	if(ishuman(M))
 		var/mob/living/carbon/human/H = M
-		if(H.species && H.species.slowdown && !(flags & MUTCHK_FORCED))
+		if(H.dna.species && H.dna.species.slowdown && !(flags & MUTCHK_FORCED))
 			return 0
 	return 1
 
@@ -103,11 +103,13 @@
 	..(M,connected,flags)
 	M.pass_flags |= PASSTABLE
 	M.resize = 0.8
+	M.update_transform()
 
 /datum/dna/gene/basic/midget/deactivate(var/mob/M, var/connected, var/flags)
 	..()
 	M.pass_flags &= ~PASSTABLE
 	M.resize = 1.25
+	M.update_transform()
 
 // OLD HULK BEHAVIOR
 /datum/dna/gene/basic/hulk

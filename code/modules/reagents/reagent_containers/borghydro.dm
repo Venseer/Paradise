@@ -26,11 +26,11 @@
 
 /obj/item/reagent_containers/borghypo/syndicate
 	name = "syndicate cyborg hypospray"
-	desc = "An experimental piece of Syndicate technology used to produce powerful restorative nanites used to very quickly restore injuries of all types. Also metabolizes potassium iodide, for radiation poisoning, and morphine, for offense."
+	desc = "An experimental piece of Syndicate technology used to produce powerful restorative nanites used to very quickly restore injuries of all types. Also metabolizes potassium iodide, for radiation poisoning, and hydrocodone, for field surgery and pain relief."
 	icon_state = "borghypo_s"
 	charge_cost = 20
 	recharge_time = 2
-	reagent_ids = list("syndicate_nanites", "potass_iodide", "ether")
+	reagent_ids = list("syndicate_nanites", "potass_iodide", "hydrocodone")
 	bypass_protection = 1
 
 /obj/item/reagent_containers/borghypo/New()
@@ -82,10 +82,10 @@
 
 		R.add_reagent(M)
 		if(M.reagents)
-			var/datum/reagent/injected = chemical_reagents_list[reagent_ids[mode]]
+			var/datum/reagent/injected = GLOB.chemical_reagents_list[reagent_ids[mode]]
 			var/contained = injected.name
 			var/trans = R.trans_to(M, amount_per_transfer_from_this)
-			add_attack_logs(M, user, "Injected with [name] containing [contained], transfered [trans] units")
+			add_attack_logs(user, M, "Injected with [name] containing [contained], transfered [trans] units")
 			M.LAssailant = user
 			to_chat(user, "<span class='notice'>[trans] units injected. [R.total_volume] units remaining.</span>")
 	return
@@ -97,7 +97,7 @@
 		mode = 1
 
 	charge_tick = 0 //Prevents wasted chems/cell charge if you're cycling through modes.
-	var/datum/reagent/R = chemical_reagents_list[reagent_ids[mode]]
+	var/datum/reagent/R = GLOB.chemical_reagents_list[reagent_ids[mode]]
 	to_chat(user, "<span class='notice'>Synthesizer is now producing '[R.name]'.</span>")
 	return
 

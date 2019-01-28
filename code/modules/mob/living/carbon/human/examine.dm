@@ -29,14 +29,12 @@
 		msg += "[bicon(icon(icon, dir=SOUTH))] " //fucking BYOND: this should stop dreamseeker crashing if we -somehow- examine somebody before their icon is generated
 	msg += "<EM>[name]</EM>"
 
-	var/list/nospecies = list("Abductor", "Shadowling", "Neara", "Monkey", "Stok", "Farwa", "Wolpin") //species that won't show their race no matter what
-
-	var/displayed_species = get_species()
+	var/displayed_species = dna.species.name
 	for(var/obj/item/clothing/C in src)			//Disguise checks
 		if(C == src.head || C == src.wear_suit || C == src.wear_mask || C == src.w_uniform || C == src.belt || C == src.back)
 			if(C.species_disguise)
 				displayed_species = C.species_disguise
-	if(skipjumpsuit && skipface || (displayed_species in nospecies)) //either obscured or on the nospecies list
+	if(skipjumpsuit && skipface || (NO_EXAMINE in dna.species.species_traits)) //either obscured or on the nospecies list
 		msg += "!\n"    //omit the species when examining
 	else if(displayed_species == "Slime People") //snowflakey because Slime People are defined as a plural
 		msg += ", a slime person!\n"
@@ -182,7 +180,7 @@
 			if(!key)
 				var/foundghost = FALSE
 				if(mind)
-					for(var/mob/dead/observer/G in player_list)
+					for(var/mob/dead/observer/G in GLOB.player_list)
 						if(G.mind == mind)
 							foundghost = TRUE
 							if(G.can_reenter_corpse == 0)
@@ -199,9 +197,9 @@
 
 	var/list/wound_flavor_text = list()
 	var/list/is_destroyed = list()
-	for(var/organ_tag in species.has_limbs)
+	for(var/organ_tag in dna.species.has_limbs)
 
-		var/list/organ_data = species.has_limbs[organ_tag]
+		var/list/organ_data = dna.species.has_limbs[organ_tag]
 		var/organ_descriptor = organ_data["descriptor"]
 		is_destroyed["[organ_data["descriptor"]]"] = 1
 
@@ -293,16 +291,17 @@
 		else
 			msg += "[p_they(TRUE)] [p_are()] quite chubby.\n"
 
-	if(blood_volume < BLOOD_VOLUME_SAFE)
+	if(!isSynthetic() && blood_volume < BLOOD_VOLUME_SAFE)
 		msg += "[p_they(TRUE)] [p_have()] pale skin.\n"
 
 	if(bleedsuppress)
 		msg += "[p_they(TRUE)] [p_are()] bandaged with something.\n"
 	else if(bleed_rate)
+		var/bleed_message = !isSynthetic() ? "bleeding" : "leaking"
 		if(reagents.has_reagent("heparin"))
-			msg += "<B>[p_they(TRUE)] [p_are()] bleeding uncontrollably!</B>\n"
+			msg += "<B>[p_they(TRUE)] [p_are()] [bleed_message] uncontrollably!</B>\n"
 		else
-			msg += "<B>[p_they(TRUE)] [p_are()] bleeding!</B>\n"
+			msg += "<B>[p_they(TRUE)] [p_are()] [bleed_message]!</B>\n"
 
 	if(reagents.has_reagent("teslium"))
 		msg += "[p_they(TRUE)] [p_are()] emitting a gentle blue glow!\n"
@@ -324,7 +323,7 @@
 					var/dodebug = auto.doing2string(auto.doing)
 					var/interestdebug = auto.interest2string(auto.interest)
 					msg += "<span class='deadsay'>[p_they(TRUE)] [p_are()] appears to be [interestdebug] and [dodebug].</span>\n"
-			else if(species.show_ssd)
+			else if(dna.species.show_ssd)
 				if(!key)
 					msg += "<span class='deadsay'>[p_they(TRUE)] [p_are()] totally catatonic. The stresses of life in deep-space must have been too much for [p_them()]. Any recovery is unlikely.</span>\n"
 				else if(!client)
@@ -364,8 +363,8 @@
 					for(var/datum/data/record/R in data_core.security)
 						if(R.fields["id"] == E.fields["id"])
 							criminal = R.fields["criminal"]
-
-			msg += "<span class = 'deptradio'>Criminal status:</span> <a href='?src=[UID()];criminal=1'>\[[criminal]\]</a>\n"
+			var/criminal_status = hasHUD(user, "read_only_security") ? "\[[criminal]\]" : "<a href='?src=[UID()];criminal=[glasses]'>\[[criminal]\]</a>"
+			msg += "<span class = 'deptradio'>Criminal status:</span> [criminal_status]\n"
 			msg += "<span class = 'deptradio'>Security records:</span> <a href='?src=[UID()];secrecord=`'>\[View\]</a>  <a href='?src=[UID()];secrecordadd=`'>\[Add comment\]</a>\n"
 
 	if(hasHUD(user,"medical"))
@@ -409,7 +408,12 @@
 		var/obj/item/organ/internal/cyberimp/eyes/hud/CIH = H.get_int_organ(/obj/item/organ/internal/cyberimp/eyes/hud)
 		switch(hudtype)
 			if("security")
-				return istype(H.glasses, /obj/item/clothing/glasses/hud/security) || istype(H.glasses, /obj/item/clothing/glasses/hud/security/sunglasses) || istype(CIH,/obj/item/organ/internal/cyberimp/eyes/hud/security)
+				return istype(H.glasses, /obj/item/clothing/glasses/hud/security) || istype(CIH,/obj/item/organ/internal/cyberimp/eyes/hud/security)
+			if("read_only_security")
+				var/obj/item/clothing/glasses/hud/security/S
+				if(istype(H.glasses, /obj/item/clothing/glasses/hud/security))
+					S = H.glasses
+				return !istype(CIH,/obj/item/organ/internal/cyberimp/eyes/hud/security) && S && S.read_only
 			if("medical")
 				return istype(H.glasses, /obj/item/clothing/glasses/hud/health) || istype(H.glasses, /obj/item/clothing/glasses/hud/health/health_advanced) ||  istype(CIH,/obj/item/organ/internal/cyberimp/eyes/hud/medical)
 			else

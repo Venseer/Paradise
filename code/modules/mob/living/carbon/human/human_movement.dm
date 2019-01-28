@@ -2,7 +2,7 @@
 	. = 0
 	. += ..()
 	. += config.human_delay
-	. += species.movement_delay(src)
+	. += dna.species.movement_delay(src)
 
 /mob/living/carbon/human/Process_Spacemove(movement_dir = 0)
 
@@ -13,6 +13,8 @@
 	var/obj/item/tank/jetpack/thrust
 	if(istype(back,/obj/item/tank/jetpack))
 		thrust = back
+	else if(istype(s_store,/obj/item/tank/jetpack))
+		thrust = s_store
 	else if(istype(back,/obj/item/rig))
 		var/obj/item/rig/rig = back
 		for(var/obj/item/rig_module/maneuvering_jets/module in rig.installed_modules)
@@ -39,12 +41,12 @@
 		if(!lying && !buckled && !throwing)
 			for(var/obj/item/organ/external/splinted in splinted_limbs)
 				splinted.update_splints()
-        
+
 	if(!has_gravity(loc))
 		return
-	
+
 	var/obj/item/clothing/shoes/S = shoes
-			
+
 	//Bloody footprints
 	var/turf/T = get_turf(src)
 	var/obj/item/organ/external/l_foot = get_organ("l_foot")
@@ -85,6 +87,13 @@
 					if(!(step_count % 2)) //every other turf makes a sound
 						return 0
 
+				if(istype(shoes, /obj/item/clothing/shoes))
+					var/obj/item/clothing/shoes/shooess = shoes
+					if(shooess.silence_steps)
+						return 0 //silent
+					if(shooess.shoe_sound)
+						return //Handle it on the shoe
+
 				var/range = -(world.view - 2)
 				if(m_intent == MOVE_INTENT_WALK)
 					range -= 0.333
@@ -104,11 +113,6 @@
 				if(!shoes)
 					volume -= 4
 
-				if(istype(shoes, /obj/item/clothing/shoes))
-					var/obj/item/clothing/shoes/shooess = shoes
-					if(shooess.silence_steps)
-						return 0 //silent
-
 				if(!has_organ("l_foot") && !has_organ("r_foot"))
 					return 0 //no feet no footsteps
 
@@ -119,7 +123,7 @@
 					if(step_count % 3) //this basically says, every three moves make a noise
 						return 0       //1st - none, 1%3==1, 2nd - none, 2%3==2, 3rd - noise, 3%3==0
 
-				if(species.silent_steps)
+				if(dna.species.silent_steps)
 					return 0 //species is silent
 
 				playsound(T, S, volume, 1, range)

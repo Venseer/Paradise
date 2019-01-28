@@ -18,7 +18,7 @@
 	pixel_x = rand(0,16)-8
 	pixel_y = rand(0,8)-8
 
-	icon_state = "coin_[cmineral]_heads"
+	icon_state = "coin_[cmineral]_[sideslist[1]]"
 	if(cmineral)
 		name = "[cmineral] coin"
 
@@ -95,8 +95,9 @@
 	sideslist = list("valid", "salad")
 	credits = 20
 
-/obj/item/coin/antagtoken/New()
-	return
+/obj/item/coin/antagtoken/syndicate
+	name = "syndicate coin"
+	credits = 160
 
 /obj/item/coin/attackby(obj/item/W as obj, mob/user as mob, params)
 	if(istype(W, /obj/item/stack/cable_coil))

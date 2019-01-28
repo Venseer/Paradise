@@ -69,6 +69,7 @@
 /datum/reagent/proc/on_mob_life(mob/living/M)
 	current_cycle++
 	holder.remove_reagent(id, metabolization_rate * M.metabolism_efficiency * M.digestion_ratio) //By default it slowly disappears.
+	return STATUS_UPDATE_NONE
 
 /datum/reagent/proc/on_mob_death(mob/living/M)	//use this to have chems have a "death-triggered" effect
 	return
@@ -102,15 +103,16 @@
 // Called if the reagent has passed the overdose threshold and is set to be triggering overdose effects
 /datum/reagent/proc/overdose_process(mob/living/M, severity)
 	var/effect = rand(1, 100) - severity
+	var/update_flags = STATUS_UPDATE_NONE
 	if(effect <= 8)
-		M.adjustToxLoss(severity)
-	return effect
+		update_flags |= (M.adjustToxLoss(severity, FALSE) ? STATUS_UPDATE_HEALTH : STATUS_UPDATE_NONE)
+	return list(effect, update_flags)
 
 /datum/reagent/proc/overdose_start(mob/living/M)
 	return
 
 /datum/reagent/proc/addiction_act_stage1(mob/living/M)
-	return
+	return STATUS_UPDATE_NONE
 
 /datum/reagent/proc/addiction_act_stage2(mob/living/M)
 	if(prob(8))
@@ -119,6 +121,7 @@
 		M.emote("sneeze")
 	if(prob(4))
 		to_chat(M, "<span class='notice'>You feel a dull headache.</span>")
+	return STATUS_UPDATE_NONE
 
 /datum/reagent/proc/addiction_act_stage3(mob/living/M)
 	if(prob(8))
@@ -127,6 +130,7 @@
 		M.emote("shiver")
 	if(prob(4))
 		to_chat(M, "<span class='warning'>You begin craving [name]!</span>")
+	return STATUS_UPDATE_NONE
 
 /datum/reagent/proc/addiction_act_stage4(mob/living/M)
 	if(prob(8))
@@ -135,16 +139,48 @@
 		to_chat(M, "<span class='warning'>You have the strong urge for some [name]!</span>")
 	if(prob(4))
 		to_chat(M, "<span class='warning'>You REALLY crave some [name]!</span>")
+	return STATUS_UPDATE_NONE
 
 /datum/reagent/proc/addiction_act_stage5(mob/living/M)
+	var/update_flags = STATUS_UPDATE_NONE
 	if(prob(8))
 		M.emote("twitch")
 	if(prob(6))
 		to_chat(M, "<span class='warning'>Your stomach lurches painfully!</span>")
 		M.visible_message("<span class='warning'>[M] gags and retches!</span>")
-		M.Stun(rand(2,4))
-		M.Weaken(rand(2,4))
+		update_flags |= M.Stun(rand(2,4), FALSE)
+		update_flags |= M.Weaken(rand(2,4), FALSE)
 	if(prob(5))
 		to_chat(M, "<span class='warning'>You feel like you can't live without [name]!</span>")
 	if(prob(5))
 		to_chat(M, "<span class='warning'>You would DIE for some [name] right now!</span>")
+	return update_flags
+
+/datum/reagent/proc/fakedeath(mob/living/M)
+	if(M.status_flags & FAKEDEATH)
+		return
+	if(!(M.status_flags & CANPARALYSE))
+		return
+	if(M.mind && M.mind.changeling && M.mind.changeling.regenerating) //no messing with changeling's fake death
+		return
+	M.visible_message("<B>[M]</B> seizes up and falls limp, [M.p_their()] eyes dead and lifeless...") //so you can't trigger deathgasp emote on people. Edge case, but necessary.
+	M.status_flags |= FAKEDEATH
+	M.update_stat("fakedeath reagent")
+	M.med_hud_set_health()
+	M.med_hud_set_status()
+
+/datum/reagent/proc/fakerevive(mob/living/M)
+	if(!(M.status_flags & FAKEDEATH))
+		return
+	if(M.mind && M.mind.changeling && M.mind.changeling.regenerating)
+		return
+	if(M.resting)
+		M.StopResting()
+	M.status_flags &= ~(FAKEDEATH)
+	M.update_stat("fakedeath reagent end")
+	M.med_hud_set_status()
+	M.med_hud_set_health()
+	if(M.healthdoll)
+		M.healthdoll.cached_healthdoll_overlays.Cut()
+	if(M.dna.species)
+		M.dna.species.handle_hud_icons(M)

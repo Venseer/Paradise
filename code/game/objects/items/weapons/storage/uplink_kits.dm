@@ -1,83 +1,106 @@
 /obj/item/storage/box/syndicate/
 	New()
 		..()
-		switch(pickweight(list("bloodyspai" = 1, "thief" = 1, "bond" = 1, "sabotage" = 1, "payday" = 1, "implant" = 1, "hacker" = 1, "darklord" = 1, "gadgets" = 1)))
-			if("bloodyspai")
+		switch(pickweight(list("bloodyspai" = 1, "thief" = 1, "bond" = 1, "sabotage" = 1, "payday" = 1, "implant" = 1, "hacker" = 1, "darklord" = 1, "gadgets" = 1, "professional" = 1)))
+			if("bloodyspai")	// 28TC
 				new /obj/item/twohanded/garrote(src)
 				new /obj/item/pinpointer/advpinpointer(src)
 				new /obj/item/clothing/mask/gas/voice(src)
 				new /obj/item/clothing/under/chameleon(src)
 				new /obj/item/card/id/syndicate(src)
-				new /obj/item/storage/box/syndie_kit/emp(src)
+				new /obj/item/flashlight/emp(src)
+				new /obj/item/storage/fancy/cigarettes/cigpack_syndicate(src)
+				new /obj/item/clothing/glasses/hud/security/chameleon(src)
 				new /obj/item/camera_bug(src)
 				return
 
-			if("thief")
+			if("thief")	// 30TC
 				new /obj/item/gun/energy/kinetic_accelerator/crossbow(src)
 				new /obj/item/chameleon(src)
 				new /obj/item/clothing/gloves/color/black/thief(src)
 				new /obj/item/card/id/syndicate(src)
+				new /obj/item/clothing/shoes/syndigaloshes(src)
+				new /obj/item/storage/box/syndie_kit/safecracking(src)
 				return
 
-			if("bond")
+			if("bond")	// 29TC + Healing Cocktail
 				new /obj/item/gun/projectile/automatic/pistol(src)
 				new /obj/item/suppressor(src)
 				new /obj/item/ammo_box/magazine/m10mm/hp(src)
+				new /obj/item/ammo_box/magazine/m10mm/ap(src)
 				new /obj/item/encryptionkey/syndicate(src)
-				new /obj/item/storage/fancy/cigarettes/cigpack_syndicate(src)
-				new /obj/item/implanter/krav_maga(src)
-				new /obj/item/reagent_containers/food/drinks/drinkingglass/alliescocktail(src)
+				new /obj/item/reagent_containers/food/drinks/drinkingglass/alliescocktail(src)	// This drink heals now
+				new /obj/item/card/id/syndicate(src)
+				new /obj/item/dnascrambler(src)
+				new /obj/item/storage/box/syndie_kit/emp(src)
+				new /obj/item/CQC_manual(src)
 				return
 
-			if("sabotage")
+			if("sabotage")	// 31TC + RCD + Insuls
 				new /obj/item/powersink(src)
 				new /obj/item/grenade/syndieminibomb(src)
 				new /obj/item/card/emag(src)
 				new /obj/item/grenade/clusterbuster/n2o(src)
-				new /obj/item/storage/box/syndie_kit/space(src)
 				new /obj/item/clothing/gloves/color/yellow(src)
 				new /obj/item/rcd/preloaded(src)
+				new /obj/item/storage/box/syndie_kit/space(src)
 				return
 
-			if("payday")
+			if("payday")	// 32TC
 				new /obj/item/gun/projectile/revolver(src)
+				new /obj/item/ammo_box/a357(src)
 				new /obj/item/ammo_box/a357(src)
 				new /obj/item/card/emag(src)
 				new /obj/item/grenade/plastic/x4(src)
 				new /obj/item/card/id/syndicate(src)
 				new /obj/item/clothing/gloves/color/latex/nitrile(src)
 				new /obj/item/clothing/mask/gas/clown_hat(src)
+				new /obj/item/thermal_drill(src)
 				return
 
-			if("implant")
+			if("implant")	// 35TC
 				new /obj/item/implanter/uplink(src)
 				new /obj/item/implanter/adrenalin(src)
 				new /obj/item/implanter/storage(src)
 				new /obj/item/implanter/freedom(src)
 				return
 
-			if("hacker")
+			if("hacker")	// 22TC + Ion law uploader
 				new /obj/item/aiModule/syndicate(src)
 				new /obj/item/encryptionkey/binary(src)
+				new /obj/item/encryptionkey/syndicate(src)
 				new /obj/item/aiModule/toyAI(src)
+				new /obj/item/card/emag(src)
 				return
 
-			if("darklord")
+			if("darklord")	// 23TC + TK implant
 				new /obj/item/melee/energy/sword/saber/red(src)
 				new /obj/item/melee/energy/sword/saber/red(src)
 				new /obj/item/dnainjector/telemut/darkbundle(src)
 				new /obj/item/clothing/suit/hooded/chaplain_hoodie(src)
 				new /obj/item/card/id/syndicate(src)
+				new /obj/item/clothing/shoes/syndigaloshes(src)
+				new /obj/item/clothing/mask/gas/voice(src)
 				return
 
-			if("gadgets")
+			if("gadgets")	// 30TC
 				new /obj/item/clothing/gloves/color/yellow/power(src)
 				new /obj/item/pen/sleepy(src)
+				new /obj/item/clothing/shoes/syndigaloshes(src)
 				new /obj/item/clothing/glasses/thermal/syndi(src)
 				new /obj/item/flashlight/emp(src)
-				new /obj/item/clothing/shoes/syndigaloshes(src)
 				new /obj/item/stamp/chameleon(src)
 				new /obj/item/multitool/ai_detect(src)
+				return
+
+			if("professional")	// 30TC
+				new /obj/item/gun/projectile/automatic/sniper_rifle/soporific(src)	// Unique version that starts with soporific rounds loaded and cannot be suppressed
+				new /obj/item/ammo_box/magazine/sniper_rounds/soporific(src)
+				new /obj/item/ammo_box/magazine/sniper_rounds/soporific(src)
+				new /obj/item/pen/edagger(src)
+				new /obj/item/clothing/glasses/thermal/syndi(src)
+				new /obj/item/storage/toolbox/syndicate(src)
+				new /obj/item/clothing/under/suit_jacket(src)
 				return
 
 /obj/item/storage/box/syndie_kit
@@ -87,24 +110,28 @@
 
 /obj/item/storage/box/syndie_kit/space
 	name = "Boxed Space Suit and Helmet"
-	can_hold = list(/obj/item/clothing/suit/space/syndicate/black/red, /obj/item/clothing/head/helmet/space/syndicate/black/red)
+	can_hold = list(/obj/item/clothing/suit/space/syndicate/black/red, /obj/item/clothing/head/helmet/space/syndicate/black/red, /obj/item/tank/emergency_oxygen/syndi, /obj/item/clothing/mask/gas/syndicate)
 	max_w_class = WEIGHT_CLASS_NORMAL
 
 /obj/item/storage/box/syndie_kit/space/New()
 	..()
 	new /obj/item/clothing/suit/space/syndicate/black/red(src)
 	new /obj/item/clothing/head/helmet/space/syndicate/black/red(src)
+	new /obj/item/clothing/mask/gas/syndicate(src)
+	new /obj/item/tank/emergency_oxygen/syndi(src)
 	return
 
 /obj/item/storage/box/syndie_kit/hardsuit
 	name = "Boxed Blood Red Suit and Helmet"
-	can_hold = list(/obj/item/clothing/suit/space/hardsuit/syndi, /obj/item/clothing/head/helmet/space/hardsuit/syndi)
+	can_hold = list(/obj/item/clothing/suit/space/hardsuit/syndi, /obj/item/clothing/head/helmet/space/hardsuit/syndi, /obj/item/tank/emergency_oxygen/syndi, /obj/item/clothing/mask/gas/syndicate)
 	max_w_class = WEIGHT_CLASS_NORMAL
 
 /obj/item/storage/box/syndie_kit/hardsuit/New()
 	..()
 	new /obj/item/clothing/suit/space/hardsuit/syndi(src)
 	new /obj/item/clothing/head/helmet/space/hardsuit/syndi(src)
+	new /obj/item/clothing/mask/gas/syndicate(src)
+	new /obj/item/tank/emergency_oxygen/syndi(src)
 	return
 
 /obj/item/storage/box/syndie_kit/elite_hardsuit
@@ -203,14 +230,21 @@
 
 /obj/item/storage/box/syndie_kit/caneshotgun/New()
 	..()
-	new /obj/item/ammo_casing/shotgun/dart/assassination(src)
-	new /obj/item/ammo_casing/shotgun/dart/assassination(src)
-	new /obj/item/ammo_casing/shotgun/dart/assassination(src)
-	new /obj/item/ammo_casing/shotgun/dart/assassination(src)
-	new /obj/item/ammo_casing/shotgun/dart/assassination(src)
-	new /obj/item/ammo_casing/shotgun/dart/assassination(src)
+	new /obj/item/ammo_casing/shotgun/assassination(src)
+	new /obj/item/ammo_casing/shotgun/assassination(src)
+	new /obj/item/ammo_casing/shotgun/assassination(src)
+	new /obj/item/ammo_casing/shotgun/assassination(src)
+	new /obj/item/ammo_casing/shotgun/assassination(src)
+	new /obj/item/ammo_casing/shotgun/assassination(src)
 	new /obj/item/gun/projectile/revolver/doublebarrel/improvised/cane(src)
 
+/obj/item/storage/box/syndie_kit/mimery
+	name = "advanced mimery kit"
+
+/obj/item/storage/box/syndie_kit/mimery/New()
+	..()
+	new /obj/item/spellbook/oneuse/mime/greaterwall(src)
+	new	/obj/item/spellbook/oneuse/mime/fingergun(src)
 
 /obj/item/storage/box/syndie_kit/atmosgasgrenades
 	name = "Atmos Grenades"
@@ -262,3 +296,14 @@
 
 To apply, hold the injector a short distance away from the outer thigh before applying firmly to the skin surface. Bones should begin repair after a short time, during which you are advised to remain still. <BR><BR><BR><BR>After use you are advised to see a doctor at the next available opportunity. Mild scarring and tissue damage may occur after use. This is a prototype.</font><BR><HR></font>
 	"}
+
+/obj/item/storage/box/syndie_kit/safecracking
+	name = "Safe-cracking Kit"
+	desc = "Everything you need to quietly open a mechanical combination safe."
+
+/obj/item/storage/box/syndie_kit/safecracking/New()
+	..()
+	new /obj/item/clothing/gloves/color/latex/nitrile(src)
+	new /obj/item/clothing/mask/balaclava(src)
+	new /obj/item/clothing/accessory/stethoscope(src)
+	new /obj/item/book/manual/engineering_hacking(src)

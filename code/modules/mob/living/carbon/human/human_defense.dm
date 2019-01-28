@@ -156,6 +156,10 @@ emp_act
 			return 1
 	return 0
 
+/mob/living/carbon/human/check_block()
+	if(martial_art && prob(martial_art.block_chance) && martial_art.can_use(src) && in_throw_mode && !incapacitated(FALSE, TRUE))
+		return TRUE
+
 /mob/living/carbon/human/emp_act(severity)
 	for(var/obj/O in src)
 		if(!O)	continue
@@ -178,7 +182,7 @@ emp_act
 /mob/living/carbon/human/grabbedby(mob/living/user)
 	if(w_uniform)
 		w_uniform.add_fingerprint(user)
-	..()
+	return ..()
 
 //Returns 1 if the attack hit, 0 if it missed.
 /mob/living/carbon/human/attacked_by(obj/item/I, mob/living/user, def_zone)
@@ -220,6 +224,8 @@ emp_act
 
 	send_item_attack_message(I, user, hit_area)
 
+	var/weakness = check_weakness(I,user)
+
 	if(!I.force)
 		return 0 //item force is zero
 
@@ -227,12 +233,11 @@ emp_act
 	var/weapon_sharp = is_sharp(I)
 	if(weapon_sharp && prob(getarmor(user.zone_sel.selecting, "melee")))
 		weapon_sharp = 0
-
 	if(armor >= 100)
 		return 0
 	var/Iforce = I.force //to avoid runtimes on the forcesay checks at the bottom. Some items might delete themselves if you drop them. (stunning yourself, ninja swords)
 
-	apply_damage(I.force, I.damtype, affecting, armor, sharp = weapon_sharp, used_weapon = I)
+	apply_damage(I.force * weakness, I.damtype, affecting, armor, sharp = weapon_sharp, used_weapon = I)
 
 	var/bloody = 0
 	if(I.damtype == BRUTE && I.force && prob(25 + I.force * 2))
@@ -288,7 +293,7 @@ emp_act
 
 
 	if(Iforce > 10 || Iforce >= 5 && prob(33))
-		forcesay(hit_appends)	//forcesay checks stat already
+		forcesay(GLOB.hit_appends)	//forcesay checks stat already
 
 //this proc handles being hit by a thrown atom
 /mob/living/carbon/human/hitby(atom/movable/AM, skipcatch = 0, hitpush = 1, blocked = 0)
@@ -354,7 +359,7 @@ emp_act
 		if(check_shields(user, 15, "the [hulk_verb]ing"))
 			return
 		..(user, TRUE)
-		playsound(loc, user.species.unarmed.attack_sound, 25, 1, -1)
+		playsound(loc, user.dna.species.unarmed.attack_sound, 25, 1, -1)
 		var/message = "[user] has [hulk_verb]ed [src]!"
 		visible_message("<span class='danger'>[message]</span>", "<span class='userdanger'>[message]</span>")
 		adjustBruteLoss(15)
@@ -365,7 +370,7 @@ emp_act
 		return
 	if(ishuman(user))
 		var/mob/living/carbon/human/H = user
-		species.spec_attack_hand(H, src)
+		dna.species.spec_attack_hand(H, src)
 
 /mob/living/carbon/human/attack_larva(mob/living/carbon/alien/larva/L)
 	if(..()) //successful larva bite.
@@ -375,7 +380,7 @@ emp_act
 			var/obj/item/organ/external/affecting = get_organ(ran_zone(L.zone_sel.selecting))
 			var/armor_block = run_armor_check(affecting, "melee")
 			apply_damage(damage, BRUTE, affecting, armor_block)
-			updatehealth()
+			updatehealth("larva attack")
 
 /mob/living/carbon/human/attack_alien(mob/living/carbon/alien/humanoid/M)
 	if(check_shields(0, M.name))
@@ -404,7 +409,7 @@ emp_act
  					"<span class='userdanger'>[M] has wounded [src]!</span>")
 				apply_effect(4, WEAKEN, armor_block)
 				add_attack_logs(M, src, "Alien attacked")
-			updatehealth()
+			updatehealth("alien attack")
 
 		if(M.a_intent == INTENT_DISARM)
 			if(prob(80))
@@ -434,7 +439,7 @@ emp_act
 		if(affected)
 			affected.add_autopsy_data(M.name, damage) // Add the mob's name to the autopsy data
 		apply_damage(damage, M.melee_damage_type, affecting, armor)
-		updatehealth()
+		updatehealth("animal attack")
 
 /mob/living/carbon/human/attack_slime(mob/living/carbon/slime/M)
 	..()
@@ -473,7 +478,7 @@ emp_act
 					M.mech_toxin_damage(src)
 				else
 					return
-			updatehealth()
+			updatehealth("mech melee attack")
 
 		M.occupant_message("<span class='danger'>You hit [src].</span>")
 		visible_message("<span class='danger'>[src] has been hit by [M.name].</span>", \
@@ -494,7 +499,7 @@ emp_act
 
 /mob/living/carbon/human/water_act(volume, temperature, source)
 	..()
-	species.water_act(src,volume,temperature,source)
+	dna.species.water_act(src,volume,temperature,source)
 
 /mob/living/carbon/human/is_eyes_covered(check_glasses = TRUE, check_head = TRUE, check_mask = TRUE)
 	if(check_glasses && glasses && (glasses.flags_cover & GLASSESCOVERSEYES))

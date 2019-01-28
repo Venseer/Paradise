@@ -7,7 +7,7 @@ var/global/list/role_playtime_requirements = list(
 	ROLE_SENTIENT = 5,
 	ROLE_ERT = 10, // High, because they're team-based, and we want ERT to be robust
 	ROLE_DEATHSQUAD = 10,
-	ROLE_TRADER = 5,
+	ROLE_TRADER = 20, // Very high, because they're an admin-spawned event with powerful items
 	ROLE_DRONE = 10, // High, because they're like mini engineering cyborgs that can ignore the AI, ventcrawl, and respawn themselves
 
 	// SOLO ANTAGS
@@ -37,6 +37,18 @@ var/global/list/role_playtime_requirements = list(
 	ROLE_ABDUCTOR = 10,
 )
 
+// Client Verbs
+
+/client/verb/cmd_check_own_playtime()
+	set category = "Special Verbs"
+	set name = "Check my playtime"
+
+	if(!config.use_exp_tracking)
+		to_chat(src, "<span class='warning'>Playtime tracking is not enabled.</span>")
+		return
+
+	to_chat(src, "<span class='notice'>Your playtime is [get_exp_living()].</span>")
+
 // Admin Verbs
 
 /client/proc/cmd_mentor_check_player_exp()	//Allows admins to determine who the newer players are.
@@ -50,7 +62,7 @@ var/global/list/role_playtime_requirements = list(
 	var/pline
 	var/datum/job/theirjob
 	var/jtext
-	for(var/client/C in clients)
+	for(var/client/C in GLOB.clients)
 		jtext = "No Job"
 		if(C.mob.mind && C.mob.mind.assigned_role)
 			theirjob = job_master.GetJob(C.mob.mind.assigned_role)
@@ -164,10 +176,7 @@ var/global/list/role_playtime_requirements = list(
 			if(dep == EXP_TYPE_EXEMPT)
 				return_text += "<LI>Exempt (all jobs auto-unlocked)</LI>"
 			else if(exp_data[EXP_TYPE_LIVING] > 0)
-				var/my_pc = num2text(round(exp_data[dep]/exp_data[EXP_TYPE_LIVING]*100))
-				return_text += "<LI>[dep]: [get_exp_format(exp_data[dep])] ([my_pc]%)</LI>"
-			else
-				return_text += "<LI>[dep]: [get_exp_format(exp_data[dep])] </LI>"
+				return_text += "<LI>[dep]: [get_exp_format(exp_data[dep])]</LI>"
 	if(config.use_exp_restrictions_admin_bypass && check_rights(R_ADMIN, 0, mob))
 		return_text += "<LI>Admin</LI>"
 	return_text += "</UL>"
@@ -212,7 +221,7 @@ var/global/list/role_playtime_requirements = list(
 	if(!establish_db_connection())
 		return -1
 	spawn(0)
-		for(var/client/L in clients)
+		for(var/client/L in GLOB.clients)
 			if(L.inactivity >= (10 MINUTES))
 				continue
 			spawn(0)

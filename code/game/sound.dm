@@ -11,7 +11,7 @@
  	// Looping through the player list has the added bonus of working for mobs inside containers
 	var/sound/S = sound(get_sfx(soundin))
 	var/maxdistance = (world.view + extrarange) * 3
-	var/list/listeners = player_list
+	var/list/listeners = GLOB.player_list
 	if(!ignore_walls) //these sounds don't carry through walls
 		listeners = listeners & hearers(maxdistance, turf_source)
 	for(var/P in listeners)
@@ -86,7 +86,7 @@
 /proc/sound_to_playing_players(soundin, volume = 100, vary = FALSE, frequency = 0, falloff = FALSE, channel = 0, pressure_affected = FALSE, sound/S)
 	if(!S)
 		S = sound(get_sfx(soundin))
-	for(var/m in player_list)
+	for(var/m in GLOB.player_list)
 		if(ismob(m) && !isnewplayer(m))
 			var/mob/M = m
 			M.playsound_local(M, null, volume, vary, frequency, falloff, channel, pressure_affected, S)
@@ -135,7 +135,9 @@
 			if("pageturn")
 				soundin = pick('sound/effects/pageturn1.ogg', 'sound/effects/pageturn2.ogg','sound/effects/pageturn3.ogg')
 			if("gunshot")
-				soundin = pick('sound/weapons/Gunshot.ogg', 'sound/weapons/Gunshot2.ogg','sound/weapons/Gunshot3.ogg','sound/weapons/Gunshot4.ogg')
+				soundin = pick('sound/weapons/gunshots/gunshot.ogg', 'sound/weapons/gunshots/gunshot2.ogg','sound/weapons/gunshots/gunshot3.ogg','sound/weapons/gunshots/gunshot4.ogg')
+			if("casingdrop")
+				soundin = pick('sound/weapons/gun_interactions/casingfall1.ogg', 'sound/weapons/gun_interactions/casingfall2.ogg', 'sound/weapons/gun_interactions/casingfall3.ogg')
 			if("computer_ambience")
 				soundin = pick('sound/goonstation/machines/ambicomp1.ogg', 'sound/goonstation/machines/ambicomp2.ogg', 'sound/goonstation/machines/ambicomp3.ogg')
 			if("ricochet")
@@ -146,4 +148,9 @@
 							  'sound/machines/terminal_button07.ogg', 'sound/machines/terminal_button08.ogg')
 			if("growls")
 				soundin = pick('sound/goonstation/voice/growl1.ogg', 'sound/goonstation/voice/growl2.ogg', 'sound/goonstation/voice/growl3.ogg')
+
+			if("bonebreak")
+				soundin = pick('sound/effects/bone_break_1.ogg', 'sound/effects/bone_break_2.ogg', 'sound/effects/bone_break_3.ogg', 'sound/effects/bone_break_4.ogg', 'sound/effects/bone_break_5.ogg', 'sound/effects/bone_break_6.ogg')
+			if("honkbot_e")
+				soundin = pick('sound/items/bikehorn.ogg', 'sound/items/AirHorn2.ogg', 'sound/misc/sadtrombone.ogg', 'sound/items/AirHorn.ogg', 'sound/items/WEEOO1.ogg', 'sound/voice/biamthelaw.ogg', 'sound/voice/bcreep.ogg','sound/magic/Fireball.ogg' ,'sound/effects/pray.ogg', 'sound/voice/hiss1.ogg','sound/machines/buzz-sigh.ogg', 'sound/machines/ping.ogg', 'sound/weapons/flashbang.ogg', 'sound/weapons/bladeslice.ogg')
 	return soundin

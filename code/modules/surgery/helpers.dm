@@ -15,7 +15,7 @@
 					current_surgery = S
 
 			if(!current_surgery)
-				var/list/all_surgeries = surgeries_list.Copy()
+				var/list/all_surgeries = GLOB.surgeries_list.Copy()
 				var/list/available_surgeries = list()
 
 				for(var/datum/surgery/S in all_surgeries)
@@ -84,7 +84,7 @@
 /proc/get_pain_modifier(mob/living/carbon/human/M) //returns modfier to make surgery harder if patient is conscious and feels pain
 	if(M.stat) //stat=0 if CONSCIOUS, 1=UNCONSCIOUS and 2=DEAD. Operating on dead people is easy, too. Just sleeping won't work, though.
 		return 1
-	if(NO_PAIN in M.species.species_traits)//if you don't feel pain, you can hold still
+	if(NO_PAIN in M.dna.species.species_traits)//if you don't feel pain, you can hold still
 		return 1
 	if(M.reagents.has_reagent("hydrocodone"))//really good pain killer
 		return 0.99
@@ -106,7 +106,7 @@
 		return 1
 	else if(locate(/obj/structure/table, T))
 		return 0.8
-	else if(locate(/obj/structure/stool/bed, T))
+	else if(locate(/obj/structure/bed, T))
 		return 0.7
 	else
 		return 0.5

@@ -77,7 +77,7 @@
 				health -= O.force * 0.75
 			else
 		if(health <= 0)
-			visible_message("<span class=warning>The bookcase is smashed apart!</span>")
+			visible_message("<span class='warning'>The bookcase is smashed apart!</span>")
 			qdel(src)
 		return ..()
 
@@ -167,8 +167,9 @@
 	icon_state ="book"
 	throw_speed = 1
 	throw_range = 5
+	force = 2
 	w_class = WEIGHT_CLASS_NORMAL		 //upped to three because books are, y'know, pretty big. (and you could hide them inside eachother recursively forever)
-	attack_verb = list("bashed", "whacked", "educated")
+	attack_verb = list("bashed", "whacked")
 	burn_state = FLAMMABLE
 
 	var/dat			 // Actual page content
@@ -228,7 +229,7 @@
 					src.name = newtitle
 					src.title = newtitle
 			if("Contents")
-				var/content = strip_html(input(usr, "Write your book's contents (HTML NOT allowed):"), MAX_BOOK_MESSAGE_LEN) as message|null
+				var/content = strip_html(input(usr, "Write your book's contents (HTML NOT allowed):") as message|null, MAX_BOOK_MESSAGE_LEN)
 				if(!content)
 					to_chat(usr, "The content is invalid.")
 					return 1
@@ -283,6 +284,14 @@
 	else
 		return ..()
 
+/obj/item/book/attack(mob/M, mob/living/user)
+	if(user.a_intent == INTENT_HELP)
+		force = 0
+		attack_verb = list("educated")
+	else
+		force = initial(force)
+		attack_verb = list("bashed", "whacked")
+	..()
 
 /*
  * Barcode Scanner

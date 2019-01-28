@@ -34,7 +34,8 @@
 		return
 
 	H.dna.SetSEState(SOBERBLOCK,1)
-	H.mutations += SOBER
+	genemutcheck(H, SOBERBLOCK, null, MUTCHK_FORCED)
+	H.dna.default_blocks.Add(SOBERBLOCK)
 	H.check_mutations = 1
 
 
@@ -244,14 +245,13 @@
 	if(visualsOnly)
 		return
 
-	if(H.get_species() == "Machine")
+	if(ismachine(H))
 		var/obj/item/organ/internal/cyberimp/brain/clown_voice/implant = new
 		implant.insert(H)
 
 	H.mutations.Add(CLUMSY)
-	H.dna.SetSEState(COMICBLOCK, 1, 1)
-	genemutcheck(H, COMICBLOCK, null, MUTCHK_FORCED)
-
+	if(!ismachine(H))
+		H.mutations.Add(COMIC)
 
 /datum/job/mime
 	title = "Mime"
@@ -381,7 +381,6 @@
 	shoes = /obj/item/clothing/shoes/black
 	l_ear = /obj/item/radio/headset/headset_service
 	backpack_contents = list(
-		/obj/item/clothing/shoes/black = 1,
 		/obj/item/storage/box/lip_stick = 1,
 		/obj/item/storage/box/barber = 1
 	)

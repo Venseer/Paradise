@@ -59,13 +59,25 @@
 
 /obj/item/ammo_casing/energy/xray
 	projectile_type = /obj/item/projectile/beam/xray
-	e_cost = 50
+	e_cost = 100
 	fire_sound = 'sound/weapons/laser3.ogg'
 
 /obj/item/ammo_casing/energy/immolator
 	projectile_type = /obj/item/projectile/beam/immolator
 	fire_sound = 'sound/weapons/laser3.ogg'
 	e_cost = 125
+
+/obj/item/ammo_casing/energy/immolator/strong
+	projectile_type = /obj/item/projectile/beam/immolator/strong
+	e_cost = 125
+	select_name = "precise"
+
+/obj/item/ammo_casing/energy/immolator/scatter
+	projectile_type = /obj/item/projectile/beam/immolator/weak
+	e_cost = 125
+	pellets = 6
+	variance = 25
+	select_name = "scatter"
 
 /obj/item/ammo_casing/energy/electrode
 	projectile_type = /obj/item/projectile/energy/electrode
@@ -75,7 +87,7 @@
 	delay = 15
 
 /obj/item/ammo_casing/energy/electrode/gun
-	fire_sound = 'sound/weapons/gunshot.ogg'
+	fire_sound = 'sound/weapons/gunshots/gunshot.ogg'
 	e_cost = 100
 
 /obj/item/ammo_casing/energy/electrode/hos //allows balancing of HoS and blueshit guns seperately from other energy weapons
@@ -206,7 +218,7 @@
 
 /obj/item/ammo_casing/energy/clown
 	projectile_type = /obj/item/projectile/clown
-	fire_sound = 'sound/weapons/Gunshot_smg.ogg'
+	fire_sound = 'sound/weapons/gunshots/gunshot_smg.ogg'
 	select_name = "clown"
 
 /obj/item/ammo_casing/energy/sniper

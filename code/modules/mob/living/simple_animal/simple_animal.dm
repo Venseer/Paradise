@@ -61,7 +61,8 @@
 	var/obj/item/clothing/accessory/petcollar/collar = null
 	var/can_collar = 0 // can add collar to mob or not
 
-//Hot simple_animal baby making vars
+	//Hot simple_animal baby making vars
+
 	var/childtype = null
 	var/scan_ready = 1
 	var/simplespecies //Sorry, no spider+corgi buttbabies.
@@ -75,13 +76,14 @@
 	var/sentience_type = SENTIENCE_ORGANIC // Sentience type, for slime potions
 	var/list/loot = list() //list of things spawned at mob's loc when it dies
 	var/del_on_death = 0 //causes mob to be deleted on death, useful for mobs that spawn lootable corpses
+	var/attacked_sound = "punch"
 	var/deathmessage = ""
 	var/death_sound = null //The sound played on death
 
 
-/mob/living/simple_animal/New()
+/mob/living/simple_animal/Initialize()
 	..()
-	simple_animal_list += src
+	GLOB.simple_animal_list += src
 	verbs -= /mob/verb/observe
 	if(!can_hide)
 		verbs -= /mob/living/simple_animal/verb/hide
@@ -95,7 +97,7 @@
 		collar.forceMove(loc)
 		collar = null
 	master_commander = null
-	simple_animal_list -= src
+	GLOB.simple_animal_list -= src
 	return ..()
 
 /mob/living/simple_animal/Login()
@@ -104,8 +106,8 @@
 		client.screen += client.void
 	..()
 
-/mob/living/simple_animal/updatehealth()
-	..()
+/mob/living/simple_animal/updatehealth(reason = "none given")
+	..(reason)
 	health = Clamp(health, 0, maxHealth)
 	med_hud_set_status()
 
@@ -126,12 +128,15 @@
 		else if(stat != DEAD)
 			icon_state = icon_living
 
-/mob/living/simple_animal/handle_regular_status_updates()
-	if(..()) //alive
+/mob/living/simple_animal/update_stat(reason = "none given")
+	if(status_flags & GODMODE)
+		return
+
+	..(reason)
+	if(stat != DEAD)
 		if(health < 1)
 			death()
-			return FALSE
-		return TRUE
+			create_debug_log("died of damage, trigger reason: [reason]")
 
 /mob/living/simple_animal/proc/handle_automated_action()
 	return
@@ -302,6 +307,10 @@
 	stat(null, "Health: [round((health / maxHealth) * 100)]%")
 
 /mob/living/simple_animal/death(gibbed)
+	// Only execute the below if we successfully died
+	. = ..()
+	if(!.)
+		return FALSE
 	if(nest)
 		nest.spawned_mobs -= src
 		nest = null
@@ -321,10 +330,8 @@
 	else
 		health = 0
 		icon_state = icon_dead
-		stat = DEAD
 		density = 0
 		lying = 1
-	..()
 
 /mob/living/simple_animal/ex_act(severity)
 	..()
@@ -340,35 +347,42 @@
 		if(3.0)
 			adjustBruteLoss(30)
 
-/mob/living/simple_animal/proc/adjustHealth(amount)
+/mob/living/simple_animal/proc/adjustHealth(amount, updating_health = TRUE)
 	if(status_flags & GODMODE)
 		return FALSE
+	var/oldbruteloss = bruteloss
 	bruteloss = Clamp(bruteloss + amount, 0, maxHealth)
-	handle_regular_status_updates()
+	if(oldbruteloss == bruteloss)
+		updating_health = FALSE
+		. = STATUS_UPDATE_NONE
+	else
+		. = STATUS_UPDATE_HEALTH
+	if(updating_health)
+		updatehealth()
 
-/mob/living/simple_animal/adjustBruteLoss(amount)
+/mob/living/simple_animal/adjustBruteLoss(amount, updating_health = TRUE)
 	if(damage_coeff[BRUTE])
-		adjustHealth(amount * damage_coeff[BRUTE])
+		return adjustHealth(amount * damage_coeff[BRUTE], updating_health)
 
-/mob/living/simple_animal/adjustFireLoss(amount)
+/mob/living/simple_animal/adjustFireLoss(amount, updating_health = TRUE)
 	if(damage_coeff[BURN])
-		adjustHealth(amount * damage_coeff[BURN])
+		return adjustHealth(amount * damage_coeff[BURN], updating_health)
 
-/mob/living/simple_animal/adjustOxyLoss(amount)
+/mob/living/simple_animal/adjustOxyLoss(amount, updating_health = TRUE)
 	if(damage_coeff[OXY])
-		adjustHealth(amount * damage_coeff[OXY])
+		return adjustHealth(amount * damage_coeff[OXY], updating_health)
 
-/mob/living/simple_animal/adjustToxLoss(amount)
+/mob/living/simple_animal/adjustToxLoss(amount, updating_health = TRUE)
 	if(damage_coeff[TOX])
-		adjustHealth(amount * damage_coeff[TOX])
+		return adjustHealth(amount * damage_coeff[TOX], updating_health)
 
-/mob/living/simple_animal/adjustCloneLoss(amount)
+/mob/living/simple_animal/adjustCloneLoss(amount, updating_health = TRUE)
 	if(damage_coeff[CLONE])
-		adjustHealth(amount * damage_coeff[CLONE])
+		return adjustHealth(amount * damage_coeff[CLONE], updating_health)
 
-/mob/living/simple_animal/adjustStaminaLoss(amount)
+/mob/living/simple_animal/adjustStaminaLoss(amount, updating_health = TRUE)
 	if(damage_coeff[STAMINA])
-		return ..(amount*damage_coeff[STAMINA])
+		return ..(amount*damage_coeff[STAMINA], updating_health)
 
 /mob/living/simple_animal/proc/CanAttack(var/atom/the_target)
 	if(see_invisible < the_target.invisibility)
@@ -548,25 +562,21 @@
 /mob/living/simple_animal/proc/sentience_act() //Called when a simple animal gains sentience via gold slime potion
 	return
 
-/mob/living/simple_animal/update_sight(reset_sight = FALSE)
+/mob/living/simple_animal/update_sight()
 	if(!client)
 		return
 	if(stat == DEAD)
 		grant_death_vision()
 		return
 
-	if(reset_sight)
-		see_invisible = initial(see_invisible)
-		see_in_dark = initial(see_in_dark)
-		sight = initial(sight)
+	see_invisible = initial(see_invisible)
+	see_in_dark = initial(see_in_dark)
+	sight = initial(sight)
 
 	if(client.eye != src)
 		var/atom/A = client.eye
 		if(A.update_remote_sight(src)) //returns 1 if we override all other sight updates.
 			return
 
-/mob/living/simple_animal/SetEarDamage()
-	return
-
-/mob/living/simple_animal/SetEarDeaf()
-	return
+/mob/living/simple_animal/can_hear()
+	. = TRUE

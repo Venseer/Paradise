@@ -12,7 +12,7 @@
 /datum/surgery/cybernetic_repair/internal
 	name = "Internal Component Manipulation"
 	steps = list(/datum/surgery_step/robotics/external/unscrew_hatch,/datum/surgery_step/robotics/external/open_hatch,/datum/surgery_step/robotics/manipulate_robotic_organs)
-	possible_locs = list("eyes", "chest","head","groin","l_arm","r_arm")
+	possible_locs = list("eyes", "mouth", "chest","head","groin","l_arm","r_arm")
 	requires_organic_bodypart = 0
 
 /datum/surgery/cybernetic_amputation
@@ -347,12 +347,12 @@
 			to_chat(user, "<span class='danger'>You cannot install a computer brain into a meat enclosure.</span>")
 			return -1
 
-		if(!target.species)
+		if(!target.dna.species)
 			to_chat(user, "<span class='danger'>You have no idea what species this person is. Report this on the bug tracker.</span>")
 			return -1
 
-		if(!target.species.has_organ["brain"])
-			to_chat(user, "<span class='danger'>You're pretty sure [target.species.name_plural] don't normally have a brain.</span>")
+		if(!target.dna.species.has_organ["brain"])
+			to_chat(user, "<span class='danger'>You're pretty sure [target.dna.species.name_plural] don't normally have a brain.</span>")
 			return -1
 
 		if(target.get_int_organ(/obj/item/organ/internal/brain/))
@@ -590,6 +590,7 @@
 	target.UpdateDamageIcon()
 	user.visible_message("<span class='notice'> [user] reprograms the appearance of [target]'s [affected.name] with [tool].</span>", \
 	"<span class='notice'> You reprogram the appearance of [target]'s [affected.name] with [tool].</span>")
+	affected.open = 0
 	return TRUE
 
 /datum/surgery_step/robotics/external/customize_appearance/fail_step(mob/living/user, mob/living/carbon/human/target, target_zone, obj/item/tool,datum/surgery/surgery)

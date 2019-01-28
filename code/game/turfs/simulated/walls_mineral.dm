@@ -115,6 +115,8 @@
 		PlasmaBurn(exposed_temperature)
 
 /turf/simulated/wall/mineral/plasma/bullet_act(var/obj/item/projectile/Proj)
+	if(Proj.damage == 0)//lasertag guns and so on don't set off plasma anymore. can't use nodamage here because lasertag guns actually don't have it.
+		return
 	if(istype(Proj,/obj/item/projectile/beam))
 		PlasmaBurn(2500)
 	else if(istype(Proj,/obj/item/projectile/ion))
@@ -218,6 +220,31 @@
 
 /turf/simulated/wall/mineral/titanium/survival/pod
 	canSmoothWith = list(/turf/simulated/wall/mineral/titanium/survival, /obj/machinery/door/airlock/survival_pod)
+
+//undeconstructable type for derelict
+//these walls are undeconstructable/unthermitable
+/turf/simulated/wall/mineral/titanium/nodecon
+	name = "russian wall"
+	desc = "Like regular titanium, but able to deflect capitalist aggressors."
+
+/turf/simulated/wall/mineral/titanium/nodecon/tileblend
+	fixed_underlay = list("icon"='icons/turf/floors.dmi', "icon_state"="darkredfull")
+
+/turf/simulated/wall/mineral/titanium/nodecon/nodiagonal
+	smooth = SMOOTH_MORE
+	icon_state = "map-shuttle_nd"
+
+/turf/simulated/wall/mineral/titanium/nodecon/nosmooth
+	smooth = SMOOTH_FALSE
+	icon = 'icons/turf/shuttle.dmi'
+	icon_state = "wall"
+
+//properties for derelict sub-type to prevent said deconstruction/thermiting
+/turf/simulated/wall/mineral/titanium/nodecon/try_decon(obj/item/I, mob/user, params)
+	return
+
+/turf/simulated/wall/mineral/titanium/nodecon/thermitemelt(mob/user as mob, speed)
+	return
 
 /////////////////////Plastitanium walls/////////////////////
 

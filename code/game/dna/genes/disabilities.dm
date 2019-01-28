@@ -147,7 +147,7 @@
 
 /datum/dna/gene/disability/deaf/activate(var/mob/M, var/connected, var/flags)
 	..()
-	M.EarDeaf(1)
+	M.MinimumDeafTicks(1)
 
 /datum/dna/gene/disability/nearsighted
 	name="Nearsightedness"
@@ -158,6 +158,14 @@
 
 /datum/dna/gene/disability/nearsighted/New()
 	block=GLASSESBLOCK
+
+/datum/dna/gene/disability/nearsighted/activate(mob/living/M, connected, flags)
+	. = ..()
+	M.update_nearsighted_effects()
+
+/datum/dna/gene/disability/nearsighted/deactivate(mob/living/M, connected, flags)
+	. = ..()
+	M.update_nearsighted_effects()
 
 /datum/dna/gene/disability/lisp
 	name = "Lisp"
@@ -182,3 +190,15 @@
 
 /datum/dna/gene/disability/comic/New()
 	block = COMICBLOCK
+
+/datum/dna/gene/disability/wingdings
+	name = "Alien Voice"
+	desc = "Garbles the subject's voice into an incomprehensible speech."
+	activation_message = "<span class='wingdings'>Your vocal cords feel alien.</span>"
+	deactivation_message = "Your vocal cords no longer feel alien."
+	instability = -GENE_INSTABILITY_MINOR
+	mutation = WINGDINGS
+
+/datum/dna/gene/disability/wingdings/New()
+	block = WINGDINGSBLOCK
+

@@ -47,6 +47,11 @@
 		new /obj/item/stack/sheet/metal(get_turf(src))
 		qdel(src)
 
+/obj/structure/girder/temperature_expose(datum/gas_mixture/air, exposed_temperature)
+	var/temp_check = exposed_temperature
+	if(temp_check >= GIRDER_MELTING_TEMP)
+		take_damage(10)
+
 /obj/structure/girder/attackby(obj/item/W, mob/user, params)
 	add_fingerprint(user)
 	if(isscrewdriver(W))
@@ -196,6 +201,9 @@
 			return
 
 		var/obj/item/stack/sheet/S = W
+		if(!S.wall_allowed)
+			to_chat(user, "<span class='warning'>You don't think that is good material for a wall!</span>")
+			return
 
 		if(istype(S, /obj/item/stack/sheet/wood))
 			if(state == GIRDER_DISPLACED)

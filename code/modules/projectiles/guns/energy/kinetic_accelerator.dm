@@ -124,7 +124,7 @@
 	if(!suppressed)
 		playsound(loc, 'sound/weapons/kenetic_reload.ogg', 60, 1)
 	else if(isliving(loc))
-		to_chat(loc, "<span class='warning'>[src] silently charges up.<span>")
+		to_chat(loc, "<span class='warning'>[src] silently charges up.</span>")
 	update_icon()
 	overheat = FALSE
 
@@ -139,6 +139,14 @@
 			iconF = "flight_on"
 		overlays += image(icon = icon, icon_state = iconF, pixel_x = flight_x_offset, pixel_y = flight_y_offset)
 
+
+/obj/item/gun/energy/kinetic_accelerator/experimental
+	name = "experimental kinetic accelerator"
+	desc = "A modified version of the proto-kinetic accelerator, with twice the modkit space of the standard version."
+	icon_state = "kineticgun_h"
+	item_state = "kineticgun_h"
+	origin_tech = "combat=5;powerstorage=3;engineering=5"
+	max_mod_capacity = 200
 
 //Casing
 /obj/item/ammo_casing/energy/kinetic
@@ -172,7 +180,6 @@
 	damage_type = BRUTE
 	flag = "bomb"
 	range = 3
-	log_override = TRUE
 
 	var/pressure_decrease = 0.25
 	var/turf_aoe = FALSE
@@ -218,7 +225,9 @@
 		for(var/mob/living/L in range(1, target_turf) - firer - target)
 			var/armor = L.run_armor_check(def_zone, flag, "", "", armour_penetration)
 			L.apply_damage(damage*mob_aoe, damage_type, def_zone, armor)
-			to_chat(L, "<span class='userdanger'>You're struck by a [name]!</span>")
+			L.visible_message("<span class='danger'>[L] is hit by \a [src]!</span>",
+								"<span class='userdanger'>You are hit by \a [src]!</span>")
+			add_attack_logs(firer, L, "Shot with a [type]")
 
 
 //Modkits

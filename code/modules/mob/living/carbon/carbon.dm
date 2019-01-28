@@ -60,7 +60,7 @@
 					if(organ.receive_damage(d, 0))
 						H.UpdateDamageIcon()
 
-				H.updatehealth()
+				H.updatehealth("stomach attack")
 
 			else
 				src.take_organ_damage(d)
@@ -77,6 +77,10 @@
 				src.gib()
 
 #undef STOMACH_ATTACK_DELAY
+
+/mob/living/carbon/proc/has_mutated_organs()
+	return FALSE
+
 
 /mob/living/carbon/proc/vomit(var/lost_nutrition = 10, var/blood = 0, var/stun = 1, var/distance = 0, var/message = 1)
 	if(src.is_muzzled())
@@ -115,6 +119,9 @@
 	return 1
 
 /mob/living/carbon/gib()
+	. = death(1)
+	if(!.)
+		return
 	for(var/obj/item/organ/internal/I in internal_organs)
 		if(isturf(loc))
 			I.remove(src)
@@ -126,7 +133,6 @@
 			src.stomach_contents.Remove(M)
 		M.forceMove(get_turf(src))
 		visible_message("<span class='danger'>[M] bursts out of [src]!</span>")
-	. = ..()
 
 /mob/living/carbon/electrocute_act(shock_damage, obj/source, siemens_coeff = 1, override = 0, tesla_shock = 0)
 	if(status_flags & GODMODE)	//godmode
@@ -140,7 +146,7 @@
 		return 0
 	if(reagents.has_reagent("teslium"))
 		shock_damage *= 1.5 //If the mob has teslium in their body, shocks are 50% more damaging!
-	take_overall_damage(0,shock_damage, used_weapon = "Electrocution")
+	take_overall_damage(0,shock_damage, TRUE, used_weapon = "Electrocution")
 	visible_message(
 		"<span class='danger'>[src] was shocked by \the [source]!</span>", \
 		"<span class='userdanger'>You feel a powerful shock coursing through your body!</span>", \
@@ -265,7 +271,7 @@
 						H.w_uniform.add_fingerprint(M)
 				AdjustSleeping(-5)
 				if(sleeping == 0)
-					resting = 0
+					StopResting()
 				AdjustParalysis(-3)
 				AdjustStunned(-3)
 				AdjustWeakened(-3)
@@ -352,11 +358,15 @@
 
 			else
 				to_chat(src, "<span class='warning'>Your eyes are really starting to hurt. This can't be good for you!</span>")
+		if(mind && has_bane(BANE_LIGHT))
+			mind.disrupt_spells(-500)
 		return 1
 
 	else if(damage == 0) // just enough protection
 		if(prob(20))
 			to_chat(src, "<span class='notice'>Something bright flashes in the corner of your vision!</span>")
+			if(mind && has_bane(BANE_LIGHT))
+				mind.disrupt_spells(0)
 
 
 /mob/living/carbon/proc/tintcheck()
@@ -382,7 +392,7 @@ var/list/ventcrawl_machinery = list(/obj/machinery/atmospherics/unary/vent_pump,
 	if(!ventcrawler)
 		if(ishuman(src))
 			var/mob/living/carbon/human/H = src
-			ventcrawlerlocal = H.species.ventcrawler
+			ventcrawlerlocal = H.dna.species.ventcrawler
 
 	if(!ventcrawlerlocal)	return
 
@@ -570,18 +580,18 @@ var/list/ventcrawl_machinery = list(/obj/machinery/atmospherics/unary/vent_pump,
 	if(thrown_thing)
 		visible_message("<span class='danger'>[src] has thrown [thrown_thing].</span>")
 		newtonian_move(get_dir(target, src))
-		thrown_thing.throw_at(target, thrown_thing.throw_range, thrown_thing.throw_speed, src)
+		thrown_thing.throw_at(target, thrown_thing.throw_range, thrown_thing.throw_speed, src, null, null, null, move_force)
 
 /mob/living/carbon/can_use_hands()
 	if(handcuffed)
-		return 0
-	if(buckled && ! istype(buckled, /obj/structure/stool/bed/chair)) // buckling does not restrict hands
-		return 0
-	return 1
+		return FALSE
+	if(buckled && ! istype(buckled, /obj/structure/chair)) // buckling does not restrict hands
+		return FALSE
+	return TRUE
 
 /mob/living/carbon/restrained()
 	if(handcuffed)
-		return 1
+		return TRUE
 	return
 
 
@@ -1015,7 +1025,7 @@ var/list/ventcrawl_machinery = list(/obj/machinery/atmospherics/unary/vent_pump,
 	return 1
 
 /mob/living/carbon/proc/forceFedAttackLog(var/obj/item/reagent_containers/food/toEat, mob/user)
-	add_attack_logs(user, src, "Fed [toEat]. Reagents: [toEat.reagentlist(toEat)]", ATKLOG_FEW)
+	add_attack_logs(user, src, "Fed [toEat]. Reagents: [toEat.reagents.log_list(toEat)]", ATKLOG_MOST)
 	if(!iscarbon(user))
 		LAssailant = null
 	else

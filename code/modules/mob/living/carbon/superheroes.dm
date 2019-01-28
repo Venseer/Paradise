@@ -9,13 +9,15 @@
 	var/class
 	var/list/default_genes = list(REGEN, BREATHLESS, COLDRES)
 	var/list/default_spells = list()
-
+	var/activated = FALSE //for wishgranters to not give an option if someone already has it.
+	
 /datum/superheroes/proc/create(var/mob/living/carbon/human/H)
 	assign_genes(H)
 	assign_spells(H)
 	equip(H)
 	fixflags(H)
 	assign_id(H)
+	H.mind.special_role = SPECIAL_ROLE_SUPER
 
 /datum/superheroes/proc/equip(var/mob/living/carbon/human/H)
 	H.rename_character(H.real_name, name)
@@ -217,7 +219,7 @@
 		to_chat(target, "<span class='deadsay'><b>You must follow the orders of [user], and help [user.p_them()] succeed in [user.p_their()] dastardly schemes.</span>")
 		to_chat(target, "<span class='deadsay'>You may not harm other Greyshirt or [user]. However, you do not need to obey other Greyshirts.</span>")
 		ticker.mode.greyshirts += target.mind
-		target.set_species("Human")
+		target.set_species(/datum/species/human)
 		head_organ.h_style = "Bald"
 		head_organ.f_style = "Shaved"
 		target.s_tone = 35

@@ -1,6 +1,5 @@
 /obj/item/organ/internal/liver/skrell
 	alcohol_intensity = 4
-	species = "Skrell"
 
 /obj/item/organ/internal/headpocket
 	name = "headpocket"
@@ -10,7 +9,6 @@
 	w_class = WEIGHT_CLASS_TINY
 	parent_organ = "head"
 	slot = "headpocket"
-	species = "Skrell"
 	actions_types = list(/datum/action/item_action/organ_action/toggle)
 	var/obj/item/storage/internal/pocket
 
@@ -54,8 +52,8 @@
 	pocket.emp_act(severity)
 	..()
 
-/obj/item/organ/internal/headpocket/hear_talk(mob/living/M as mob, msg)
-	pocket.hear_talk(M, msg)
+/obj/item/organ/internal/headpocket/hear_talk(mob/living/M as mob, list/message_pieces)
+	pocket.hear_talk(M, message_pieces)
 	..()
 
 /obj/item/organ/internal/headpocket/hear_message(mob/living/M as mob, msg)

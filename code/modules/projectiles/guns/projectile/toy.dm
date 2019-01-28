@@ -5,7 +5,7 @@
 	icon_state = "saber"
 	item_state = "gun"
 	mag_type = /obj/item/ammo_box/magazine/toy/smg
-	fire_sound = 'sound/weapons/Gunshot_smg.ogg'
+	fire_sound = 'sound/weapons/gunshots/gunshot_smg.ogg'
 	force = 0
 	throwforce = 0
 	burst_size = 3
@@ -22,7 +22,7 @@
 	icon_state = "pistol"
 	w_class = WEIGHT_CLASS_SMALL
 	mag_type = /obj/item/ammo_box/magazine/toy/pistol
-	fire_sound = 'sound/weapons/Gunshot.ogg'
+	fire_sound = 'sound/weapons/gunshots/gunshot.ogg'
 	can_suppress = 0
 	burst_size = 1
 	fire_delay = 0
@@ -42,8 +42,8 @@
 	..()
 
 /obj/item/gun/projectile/automatic/toy/pistol/enforcer
-	name = "Enforcer trainer"
-	desc = "A foam version of the Enforcer meant to be used for training new caddets who can't be trusted with rubber bullets."
+	name = "Foam Enforcer"
+	desc = "A foam shooting version of the Enforcer meant to be used for training new caddets who can't be trusted with rubber bullets."
 	icon_state = "enforcer"
 	mag_type = /obj/item/ammo_box/magazine/toy/enforcer
 	can_flashlight = TRUE
